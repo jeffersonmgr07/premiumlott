@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PremiumLott</title>
 
-  <!-- Fuente e iconos -->
+  <!-- Fuente -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Iconos -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
     crossorigin="anonymous"
-    referrerpolicy="no-referrer"
   />
 
   <style>
@@ -23,22 +23,19 @@
       --orange: #f7a623;
       --white: #ffffff;
       --black: #050505;
-      --gray-dark: #111111;
     }
 
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
     body {
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: "Poppins", sans-serif;
       background: var(--black);
       color: var(--white);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
       overflow-x: hidden;
       position: relative;
     }
@@ -48,22 +45,12 @@
       content: "";
       position: fixed;
       inset: -20%;
-      background: radial-gradient(circle at 0% 0%, rgba(255, 197, 43, 0.35), transparent 55%),
-                  radial-gradient(circle at 100% 100%, rgba(247, 166, 35, 0.4), transparent 55%),
-                  linear-gradient(135deg, #000000 0%, #151515 40%, #222222 100%);
+      background: radial-gradient(circle at 0% 0%, rgba(255,197,43,0.35), transparent 55%),
+                  radial-gradient(circle at 100% 100%, rgba(247,166,35,0.4), transparent 55%),
+                  linear-gradient(135deg, #000, #151515, #222);
       background-size: 200% 200%;
       animation: moveGradient 18s ease-in-out infinite alternate;
       z-index: -2;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 20% 0%, rgba(255,255,255,0.06), transparent 55%),
-                  radial-gradient(circle at 80% 100%, rgba(0,0,0,0.65), transparent 65%);
-      z-index: -1;
-      pointer-events: none;
     }
 
     @keyframes moveGradient {
@@ -75,289 +62,186 @@
     .page-wrapper {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem 1.5rem 2.5rem;
+      padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Header */
+    /* HEADER */
     header {
       display: flex;
+      justify-content: flex-end;
       align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
       margin-bottom: 3rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .brand img {
-      height: 40px;
-      width: auto;
-      display: block;
-    }
-
-    .brand span {
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      opacity: 0.8;
+      z-index: 5;
     }
 
     .header-actions {
       display: flex;
-      align-items: center;
       gap: 0.75rem;
     }
 
     .btn {
-      border: 0;
-      border-radius: 999px;
+      border: none;
       padding: 0.5rem 1.4rem;
+      border-radius: 999px;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+      transition: 0.2s ease;
       white-space: nowrap;
     }
 
     .btn-outline {
-      background: rgba(0,0,0,0.65);
-      color: var(--white);
-      border: 1px solid rgba(255,255,255,0.3);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.25);
     }
 
     .btn-outline:hover {
-      background: rgba(255,255,255,0.08);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--yellow), var(--orange));
       color: #111;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.65);
     }
 
     .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.75);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.5);
     }
 
-    /* Hero central */
+    /* MAIN */
     main {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      text-align: center;
+      align-items: center;
+      flex-direction: column;
       gap: 2.5rem;
-      position: relative;
-      z-index: 1;
+      text-align: center;
+      z-index: 5;
     }
 
-    .hero-logo {
-      position: relative;
-      padding: 1.5rem 2.5rem;
-      border-radius: 1.5rem;
-      background: rgba(0,0,0,0.75);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.06),
-        0 18px 40px rgba(0,0,0,0.9),
-        0 0 60px rgba(247,166,35,0.65);
-    }
-
+    /* LOGO SIN RECUADRO */
     .hero-logo img {
-      max-width: min(100%, 380px);
+      max-width: 420px;
+      width: 100%;
       height: auto;
       display: block;
     }
 
-    .hero-text {
-      max-width: 600px;
-      margin: 0 auto;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      opacity: 0.9;
-    }
-
+    /* LOGOS DE JUEGOS */
     .games-logos {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 1.5rem;
-      align-items: center;
       width: 100%;
-      margin-top: 0.5rem;
     }
 
     .game-card {
-      background: rgba(0,0,0,0.7);
-      border-radius: 1rem;
+      background: rgba(0,0,0,0.65);
       padding: 0.9rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,0.08);
       backdrop-filter: blur(8px);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      transition: 0.2s ease;
     }
 
     .game-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 18px 36px rgba(0,0,0,0.9);
-      border-color: rgba(255,197,43,0.6);
+      border-color: var(--yellow);
     }
 
     .game-card img {
       max-width: 170px;
       width: 100%;
-      height: auto;
       display: block;
     }
 
+    /* FOOTER */
     footer {
       margin-top: 2rem;
-      padding-top: 1.3rem;
-      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 1rem;
       flex-wrap: wrap;
       font-size: 0.8rem;
-      opacity: 0.85;
-      position: relative;
-      z-index: 1;
+      z-index: 5;
     }
 
     .social-icons {
       display: flex;
-      gap: 0.75rem;
-      font-size: 1.15rem;
+      gap: 0.7rem;
     }
 
     .social-icons a {
       width: 32px;
       height: 32px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 50%;
       background: rgba(0,0,0,0.7);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: var(--white);
-      text-decoration: none;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.2s ease;
     }
 
     .social-icons a:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       border-color: var(--yellow);
       background: rgba(255,197,43,0.2);
-      box-shadow: 0 8px 22px rgba(0,0,0,0.9);
-    }
-
-    @media (max-width: 768px) {
-      header {
-        margin-bottom: 2rem;
-      }
-      .brand span {
-        display: none;
-      }
-      .hero-logo {
-        padding: 1.2rem 1.4rem;
-      }
-      .hero-text {
-        font-size: 0.9rem;
-      }
-      .header-actions .btn {
-        padding-inline: 1rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      header {
-        flex-direction: row;
-        align-items: center;
-      }
-      .header-actions {
-        gap: 0.5rem;
-      }
-      .header-actions .btn {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.9rem;
-      }
-      footer {
-        flex-direction: column;
-        align-items: flex-start;
-      }
     }
   </style>
 </head>
 
 <body>
   <div class="page-wrapper">
+
     <!-- HEADER -->
     <header>
-      <div class="brand">
-        <img src="img/Logo PremiumLott.png" alt="PremiumLott" />
-        <span>Juega en modo premium</span>
-      </div>
-
       <div class="header-actions">
         <button class="btn btn-outline">Iniciar sesión</button>
         <button class="btn btn-primary">Regístrate</button>
       </div>
     </header>
 
-    <!-- CONTENIDO PRINCIPAL -->
+    <!-- MAIN -->
     <main>
-      <section class="hero">
-        <div class="hero-logo">
-          <img src="img/Logo PremiumLott.png" alt="PremiumLott" />
-        </div>
+      <div class="hero-logo">
+        <img src="img/Logo-PremiumLott-1.png" alt="PremiumLott">
+      </div>
 
-        <p class="hero-text">
-          Todos tus juegos favoritos en un solo lugar: sorteos, bingo, fútbol y mucho más,
-          con una experiencia realmente <strong>premium</strong>.
-        </p>
-
-        <div class="games-logos">
-          <div class="game-card">
-            <img src="img/Bingo Premium IMG01.png" alt="Bingo Premium" />
-          </div>
-          <div class="game-card">
-            <img src="img/MegaLott.png" alt="MegaLott" />
-          </div>
-          <div class="game-card">
-            <img src="img/PremiumGol FN.png" alt="PremiumGol" />
-          </div>
-          <div class="game-card">
-            <img src="img/PremiumBall.png" alt="PremiumBall" />
-          </div>
+      <div class="games-logos">
+        <div class="game-card">
+          <img src="img/Bingo Premium IMG01.png" alt="Bingo Premium">
         </div>
-      </section>
+        <div class="game-card">
+          <img src="img/MegaLott.png" alt="MegaLott">
+        </div>
+        <div class="game-card">
+          <img src="img/PremiumGol FN.png" alt="PremiumGol">
+        </div>
+        <div class="game-card">
+          <img src="img/PremiumBall.png" alt="PremiumBall">
+        </div>
+      </div>
     </main>
 
     <!-- FOOTER -->
     <footer>
       <span>© <span id="year"></span> PremiumLott. Todos los derechos reservados.</span>
+
       <div class="social-icons">
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="#"><i class="fab fa-facebook-f"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-tiktok"></i></a>
+        <a href="#"><i class="fab fa-youtube"></i></a>
       </div>
     </footer>
   </div>
