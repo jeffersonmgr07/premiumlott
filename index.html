@@ -133,18 +133,20 @@
       margin: 0 auto;
     }
 
-    /* PASARELA — ESFERAS 3D MEJORADAS */
+    /* PASARELA — ESFERAS 3D */
     .sphere-row {
-      width: 100vw;              /* ocupa todo el ancho de la pantalla */
+      width: 100vw;              
       position: relative;
-      left: 50%;
-      transform: translateX(-50%);
       overflow: hidden;
       margin-top: 2.5rem;
-      padding: 40px 0;           /* evita recorte de sombras */
+      padding: 40px 0;
+
+      /* Fuerza que abarque TODA la pantalla */
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
     }
 
-    /* Fade lateral totalmente transparente (se mantiene por si sirve para cortes limpios, pero sin color) */
+    /* Fade lateral transparente */
     .sphere-row::before,
     .sphere-row::after {
       content: "";
@@ -157,13 +159,8 @@
       background: transparent;
     }
 
-    .sphere-row::before {
-      left: 0;
-    }
-
-    .sphere-row::after {
-      right: 0;
-    }
+    .sphere-row::before { left: 0; }
+    .sphere-row::after  { right: 0; }
 
     .sphere-track {
       display: flex;
@@ -171,13 +168,12 @@
       animation: moveLeft 22s linear infinite;
     }
 
-    /* Movimiento continuo */
     @keyframes moveLeft {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
 
-    /* ESFERAS PREMIUM — más oscuras + brillo + flotación */
+    /* ESFERAS 3D Premium */
     .sphere {
       width: 150px;
       height: 150px;
@@ -202,7 +198,6 @@
       transition: 0.3s ease;
     }
 
-    /* Animación flotante */
     @keyframes floatSphere {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-12px); }
@@ -228,7 +223,6 @@
       50% { transform: translateX(12px) translateY(8px) scale(1.15); opacity: 0.55; }
     }
 
-    /* EFECTOS EN HOVER — zoom + giro 3D */
     .sphere:hover {
       transform: translateY(-18px) scale(1.08) rotateX(12deg) rotateY(-8deg);
       z-index: 10;
@@ -260,6 +254,13 @@
       gap: 0.7rem;
     }
 
+    /* Instagram corregido */
+    .social-icons a i.fa-instagram {
+      background: radial-gradient(circle at 30% 30%, #fdf497, #fd5949, #d6249f, #285AEB);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
     .social-icons a {
       width: 32px;
       height: 32px;
@@ -287,7 +288,7 @@
       }
 
       .hero-logo img {
-        max-width: 80%; /* ~20% más pequeño que en escritorio */
+        max-width: 80%; /* 20% más pequeño */
       }
 
       /* Pasarela más rápida en móvil */
@@ -295,7 +296,7 @@
         animation: moveLeft 14s linear infinite;
       }
 
-      /* Footer: iconos arriba y más grandes */
+      /* Footer reorganizado */
       footer {
         flex-direction: column;
         align-items: center;
@@ -303,14 +304,14 @@
       }
 
       .social-icons {
-        order: -1; /* mostrar iconos encima del texto */
+        order: -1;
         justify-content: center;
       }
 
       .social-icons a {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
       }
     }
   </style>
@@ -346,7 +347,7 @@
           <div class="sphere"><img src="img/logos/Logo PremiumGol.png" alt="PremiumGol"></div>
           <div class="sphere"><img src="img/logos/Logo Raspaditas Premium.png" alt="Raspaditas Premium"></div>
 
-          <!-- Copia para loop infinito -->
+          <!-- Copia loop infinito -->
           <div class="sphere"><img src="img/logos/Logo Bingo Premium.png" alt="Bingo Premium"></div>
           <div class="sphere"><img src="img/logos/Logo MegaLott.png" alt="MegaLott"></div>
           <div class="sphere"><img src="img/logos/Logo PremiumBall.png" alt="PremiumBall"></div>
