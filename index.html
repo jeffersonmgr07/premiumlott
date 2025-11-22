@@ -130,25 +130,50 @@
       display: block;
     }
 
-    /* ESFERAS 3D ANIMADAS */
+    /* PASARELA — ESFERAS 3D MEJORADAS */
     .sphere-row {
       width: 100%;
       overflow: hidden;
-      margin-top: 2rem;
+      margin-top: 2.5rem;
       position: relative;
+      padding: 40px 0; /* evita el corte de sombras */
+    }
+
+    /* Fade lateral */
+    .sphere-row::before,
+    .sphere-row::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 120px;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .sphere-row::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.95), rgba(0,0,0,0));
+    }
+
+    .sphere-row::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(0,0,0,0.95), rgba(0,0,0,0));
     }
 
     .sphere-track {
       display: flex;
-      gap: 2rem;
-      animation: moveLeft 18s linear infinite;
+      gap: 2.2rem;
+      animation: moveLeft 22s linear infinite;
     }
 
+    /* Movimiento continuo */
     @keyframes moveLeft {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
 
+    /* ESFERAS MÁS OSCURAS — Estilo Premium */
     .sphere {
       width: 150px;
       height: 150px;
@@ -157,12 +182,17 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.08), #020202f5);
+
+      /* esfera más oscura */
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.04), rgba(0,0,0,0.92));
+
+      /* sombras 3D suaves sin cortes */
       box-shadow:
-        inset 0 6px 10px rgba(255,255,255,0.12),
-        inset 0 -12px 18px rgba(0,0,0,0.8),
-        0 10px 24px rgba(0,0,0,0.85);
-      border: 1px solid rgba(255,255,255,0.06);
+        inset 0 4px 8px rgba(255,255,255,0.06),
+        inset 0 -14px 26px rgba(0,0,0,0.85),
+        0 12px 28px rgba(0,0,0,0.85);
+
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
     .sphere img {
@@ -232,14 +262,14 @@
       <div class="sphere-row">
         <div class="sphere-track">
 
-          <!-- Logos (carpeta img/logos) -->
+          <!-- Logos principales desde img/logos -->
           <div class="sphere"><img src="img/logos/Logo Bingo Premium.png" alt="Bingo Premium"></div>
           <div class="sphere"><img src="img/logos/Logo MegaLott.png" alt="MegaLott"></div>
           <div class="sphere"><img src="img/logos/Logo PremiumBall.png" alt="PremiumBall"></div>
           <div class="sphere"><img src="img/logos/Logo PremiumGol.png" alt="PremiumGol"></div>
           <div class="sphere"><img src="img/logos/Logo Raspaditas Premium.png" alt="Raspaditas Premium"></div>
 
-          <!-- Copia extra para loop infinito -->
+          <!-- Copia para movimiento infinito -->
           <div class="sphere"><img src="img/logos/Logo Bingo Premium.png" alt="Bingo Premium"></div>
           <div class="sphere"><img src="img/logos/Logo MegaLott.png" alt="MegaLott"></div>
           <div class="sphere"><img src="img/logos/Logo PremiumBall.png" alt="PremiumBall"></div>
