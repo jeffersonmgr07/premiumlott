@@ -1,0 +1,40 @@
+{
+  "games": [
+    {
+      "id": "premiumgol",
+      "title": "PremiumGol",
+      "description": "Pronostica partidos y participa por pozos semanales.",
+      "url": "juegos/premiumgol.html"
+    },
+    {
+      "id": "premiumball",
+      "title": "PremiumBall",
+      "description": "Elige tus números y participa por el gran pozo acumulado.",
+      "url": "juegos/premiumball.html"
+    },
+    {
+      "id": "mundial",
+      "title": "Mundial Premium",
+      "description": "Predice clasificados, llaves y campeón.",
+      "url": "juegos/mundial.html"
+    },
+    {
+      "id": "megalott",
+      "title": "MegaLott",
+      "description": "Sorteos especiales con grandes acumulados.",
+      "url": "#"
+    },
+    {
+      "id": "bingo",
+      "title": "Bingo Premium",
+      "description": "Cartillas, rondas y premios instantáneos.",
+      "url": "#"
+    },
+    {
+      "id": "raspaditas",
+      "title": "Raspaditas Premium",
+      "description": "Participa al instante y descubre premios al momento.",
+      "url": "#"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "es": {
+    "nav.home": "Inicio",
+    "nav.games": "Juegos",
+    "nav.login": "Iniciar sesión",
+    "nav.register": "Regístrate",
+    "hero.title": "Juegos premium, premios reales, experiencia global."
+  },
+  "en": {
+    "nav.home": "Home",
+    "nav.games": "Games",
+    "nav.login": "Log in",
+    "nav.register": "Sign up",
+    "hero.title": "Premium games, real prizes, global experience."
+  },
+  "pt": {
+    "nav.home": "Início",
+    "nav.games": "Jogos",
+    "nav.login": "Entrar",
+    "nav.register": "Cadastrar",
+    "hero.title": "Jogos premium, prêmios reais, experiência global."
+  },
+  "fr": {
+    "nav.home": "Accueil",
+    "nav.games": "Jeux",
+    "nav.login": "Connexion",
+    "nav.register": "Inscription",
+    "hero.title": "Jeux premium, prix réels, expérience mondiale."
+  },
+  "de": {
+    "nav.home": "Start",
+    "nav.games": "Spiele",
+    "nav.login": "Anmelden",
+    "nav.register": "Registrieren",
+    "hero.title": "Premium-Spiele, echte Preise, globale Erfahrung."
+  },
+  "it": {
+    "nav.home": "Home",
+    "nav.games": "Giochi",
+    "nav.login": "Accedi",
+    "nav.register": "Registrati",
+    "hero.title": "Giochi premium, premi reali, esperienza globale."
+  },
+  "zh": {
+    "nav.home": "首页",
+    "nav.games": "游戏",
+    "nav.login": "登录",
+    "nav.register": "注册",
+    "hero.title": "高级游戏，真实奖池，全球体验。"
+  },
+  "ja": {
+    "nav.home": "ホーム",
+    "nav.games": "ゲーム",
+    "nav.login": "ログイン",
+    "nav.register": "登録",
+    "hero.title": "プレミアムゲーム、リアルな賞金、グローバル体験。"
+  }
+}

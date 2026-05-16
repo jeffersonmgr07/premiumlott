@@ -1,0 +1,76 @@
+{
+  "groups": [
+    {
+      "group": "A",
+      "teams": [
+        "Perú",
+        "España",
+        "Japón",
+        "Marruecos"
+      ]
+    },
+    {
+      "group": "B",
+      "teams": [
+        "Argentina",
+        "Portugal",
+        "Canadá",
+        "Egipto"
+      ]
+    },
+    {
+      "group": "C",
+      "teams": [
+        "Brasil",
+        "Alemania",
+        "México",
+        "Ghana"
+      ]
+    },
+    {
+      "group": "D",
+      "teams": [
+        "Francia",
+        "Uruguay",
+        "Corea del Sur",
+        "Australia"
+      ]
+    },
+    {
+      "group": "E",
+      "teams": [
+        "Inglaterra",
+        "Colombia",
+        "Italia",
+        "Senegal"
+      ]
+    },
+    {
+      "group": "F",
+      "teams": [
+        "Países Bajos",
+        "Chile",
+        "Estados Unidos",
+        "Catar"
+      ]
+    },
+    {
+      "group": "G",
+      "teams": [
+        "Bélgica",
+        "Croacia",
+        "Ecuador",
+        "Arabia Saudita"
+      ]
+    },
+    {
+      "group": "H",
+      "teams": [
+        "Dinamarca",
+        "Suiza",
+        "Paraguay",
+        "Nigeria"
+      ]
+    }
+  ]
+}

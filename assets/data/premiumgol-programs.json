@@ -1,0 +1,70 @@
+{
+  "programs": [
+    {
+      "id": "PG-2026-W22-A",
+      "title": "PremiumGol Semana 22 · Programa A",
+      "ticketPrice": 5,
+      "ticketPriceLabel": "S/ 5.00",
+      "jackpotLabel": "Pozo S/ 48,500",
+      "closeDate": "2026-05-23 18:00",
+      "matches": [
+        {
+          "id": "M1",
+          "home": "Perú",
+          "away": "Chile",
+          "date": "Sáb 23 May · 19:00",
+          "league": "Internacional"
+        },
+        {
+          "id": "M2",
+          "home": "Argentina",
+          "away": "Uruguay",
+          "date": "Sáb 23 May · 20:30",
+          "league": "Internacional"
+        },
+        {
+          "id": "M3",
+          "home": "Brasil",
+          "away": "Colombia",
+          "date": "Dom 24 May · 17:00",
+          "league": "Internacional"
+        },
+        {
+          "id": "M4",
+          "home": "España",
+          "away": "Portugal",
+          "date": "Dom 24 May · 14:00",
+          "league": "Europa"
+        },
+        {
+          "id": "M5",
+          "home": "Italia",
+          "away": "Francia",
+          "date": "Dom 24 May · 16:00",
+          "league": "Europa"
+        },
+        {
+          "id": "M6",
+          "home": "Alemania",
+          "away": "Países Bajos",
+          "date": "Dom 24 May · 18:00",
+          "league": "Europa"
+        },
+        {
+          "id": "M7",
+          "home": "México",
+          "away": "Estados Unidos",
+          "date": "Lun 25 May · 20:00",
+          "league": "Concacaf"
+        },
+        {
+          "id": "M8",
+          "home": "Japón",
+          "away": "Corea del Sur",
+          "date": "Lun 25 May · 07:00",
+          "league": "Asia"
+        }
+      ]
+    }
+  ]
+}

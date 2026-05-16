@@ -1,0 +1,8 @@
+async function initMundial(){
+  const wrap=document.querySelector('[data-world-groups]'); if(!wrap) return;
+  const data=await fetch('../assets/data/mundial-fixture.json').then(r=>r.json()); const picks={};
+  wrap.innerHTML=data.groups.map(g=>`<article class="card group-card"><span class="pill">Grupo ${g.group}</span><div class="teams">${g.teams.map(t=>`<button class="team-choice" data-group="${g.group}" data-team="${t}">${t}</button>`).join('')}</div><p class="mini">Elige dos clasificados.</p></article>`).join('');
+  wrap.addEventListener('click',e=>{ if(!e.target.matches('.team-choice')) return; const group=e.target.dataset.group; picks[group]=picks[group]||[]; const team=e.target.dataset.team; if(e.target.classList.contains('active')){ e.target.classList.remove('active'); picks[group]=picks[group].filter(x=>x!==team); } else if(picks[group].length<2){ e.target.classList.add('active'); picks[group].push(team); } document.querySelector('[data-world-count]').textContent=Object.values(picks).reduce((a,b)=>a+b.length,0); });
+  document.querySelector('[data-confirm-world]').addEventListener('click',()=>{ const mode=document.querySelector('[name="mode"]:checked').value; const price=mode==='Premium'?20:mode==='Pro'?10:5; const code='PMD-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6); addTicket({code,game:'Mundial '+mode,date:new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'}),amount:PL.money(price),status:'Registrado',prize:'Pozo '+mode},price); alert('Pronóstico registrado: '+code); location.href='../mis-jugadas.html'; });
+}
+document.addEventListener('DOMContentLoaded',initMundial);
