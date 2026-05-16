@@ -7,6 +7,7 @@ const PL = {
       { code:'PLG-2026-000128', game:'PremiumGol', date:'16 May 2026', amount:'S/ 5.00', status:'En juego', prize:'Pozo S/ 48,500' },
       { code:'PMD-2026-000041', game:'Premium World Cup', date:'16 May 2026', amount:'S/ 20.00', status:'Registrado', prize:'Pozo mayor' }
     ],
+    session: { active: false },
     movements: [
       { date:'16 May 2026', detail:'Recarga de saldo', amount:'+ S/ 100.00' },
       { date:'16 May 2026', detail:'Ticket PremiumGol', amount:'- S/ 5.00' },
@@ -15,7 +16,8 @@ const PL = {
   },
   load(){ return JSON.parse(localStorage.getItem(this.key) || JSON.stringify(this.defaults)); },
   save(state){ localStorage.setItem(this.key, JSON.stringify(state)); },
-  money(value){ return 'S/ ' + Number(value || 0).toFixed(2); }
+  money(value){ return 'S/ ' + Number(value || 0).toFixed(2); },
+  isLoggedIn(){ const state=this.load(); return !!(state.session && state.session.active); }
 };
 function initLayout(){
   document.querySelectorAll('[data-year]').forEach(el => el.textContent = new Date().getFullYear());

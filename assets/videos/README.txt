@@ -1,0 +1,1 @@
+Coloca aquí los videos del hero con estos nombres para que se reproduzcan automáticamente: hero-lottery-1.mp4, hero-lottery-2.mp4 y hero-lottery-3.mp4. Deben ser MP4 ligeros, en loop, sin audio o aptos para muted autoplay.

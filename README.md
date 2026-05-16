@@ -11,3 +11,9 @@ Sube todo el contenido de esta carpeta al repositorio de GitHub Pages. El archiv
 - `assets/data`: catálogos JSON de juegos, idiomas y programas.
 - `juegos`: páginas de juegos.
 - `pages`: páginas legales y ayuda.
+
+
+## Premium World Cup V3
+- El hero del index soporta tres videos de fondo en assets/videos/.
+- La sección mundial usa grupos 2026 actualizados y llaves con ganadores dependientes de cada cruce.
+- El botón Confirmar jugada abre acceso de cliente o pasarela Mercado Pago según estado de sesión.

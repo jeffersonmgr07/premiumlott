@@ -7,12 +7,11 @@
     <a href="../index.html#juegos" data-i18n="nav.games">Juegos</a>
     <a href="../transparencia.html">Transparencia</a>
     <a class="nav-cta" href="mundial.html">Premium World Cup</a>
-    <select class="lang-select" data-lang-select><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option><option value="fr">FR</option><option value="de">DE</option><option value="it">IT</option><option value="zh">中文</option><option value="ja">日本語</option></select>
   </nav>
-  <div class="header-actions"><a class="btn btn-primary" href="../login.html" data-i18n="nav.login">Iniciar sesión</a></div>
+  <div class="header-actions"><select class="lang-select" data-lang-select><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option><option value="fr">FR</option><option value="de">DE</option><option value="it">IT</option><option value="zh">中文</option><option value="ja">日本語</option></select><a class="btn btn-primary" href="../login.html" data-i18n="nav.login">Iniciar sesión</a></div>
 </header>
 <main class="main">
-<section class="section world-hero">
+<section class="section world-hero worldcup-landing">
   <div class="section-head compact-head"><div><p class="eyebrow">Premium World Cup</p><h1 class="title">Elige tu camino mundialista.</h1><p class="lead">Tres modalidades para vivir el torneo a tu manera: desde la fase de grupos hasta el campeón.</p></div></div>
   <div class="world-mode-list">
     <article class="world-mode-card" data-start-mode="express"><img src="../assets/img/games/worldcup-express.svg" alt="World Cup Express"><div><span class="pill">S/ 5</span><h2>World Cup Express</h2><p>Pronostica la fase de grupos: primeros, segundos y mejores terceros clasificados.</p></div><button class="btn btn-primary">Jugar ahora</button></article>
@@ -30,5 +29,28 @@
 <section class="section" data-bracket-section hidden><div class="section-head"><div><p class="eyebrow">Llaves</p><h2 data-bracket-title>Eliminatorias</h2><p class="lead" data-bracket-description>Selecciona ganadores en cada cruce de la fase final.</p></div></div><div class="world-bracket" data-world-bracket></div></section>
 <section class="section" data-champion-section hidden><article class="card champion-card"><p class="eyebrow">Campeón</p><h2>Tu selección campeona</h2><p class="lead">Cierra tu fixture eligiendo al campeón del torneo.</p><div class="field"><label>Campeón</label><select data-champion-select></select></div></article></section>
 </main>
+<div class="modal-overlay" data-world-modal hidden>
+  <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="world-modal-title">
+    <button class="modal-close" type="button" data-close-world-modal>×</button>
+    <div data-modal-login hidden>
+      <p class="eyebrow">Acceso cliente</p>
+      <h2 id="world-modal-title">Inicia sesión para continuar</h2>
+      <p class="muted">Para registrar tu jugada y continuar con el pago, ingresa a tu cuenta o crea una nueva.</p>
+      <div class="modal-actions"><a class="btn btn-primary" href="../login.html?redirect=juegos/mundial.html">Iniciar sesión</a><a class="btn btn-outline" href="../registro.html?redirect=juegos/mundial.html">Regístrate aquí</a></div>
+    </div>
+    <div data-modal-payment hidden>
+      <p class="eyebrow">Confirmación de jugada</p>
+      <h2>Completa tu participación</h2>
+      <div class="payment-summary">
+        <div class="metric"><span>Modalidad</span><strong data-payment-mode>World Cup Premium</strong></div>
+        <div class="metric"><span>Total</span><strong data-payment-total>S/ 20.00</strong></div>
+      </div>
+      <p class="muted">Selecciona una pasarela para continuar con el pago de tu ticket.</p>
+      <button class="btn btn-mercado" type="button" data-pay-mercado>Continuar con Mercado Pago</button>
+      <button class="btn btn-outline" type="button" data-close-world-modal>Volver al fixture</button>
+    </div>
+  </article>
+</div>
+
 <footer class="site-footer"><span>© <span data-year></span> PremiumLott. Todos los derechos reservados.</span><div class="social-icons"><a href="#">f</a><a href="#">ig</a><a href="#">tk</a><a href="#">yt</a></div></footer>
 </div><script src="../assets/js/app.js"></script><script src="../assets/js/i18n.js"></script><script src="../assets/js/mundial.js"></script></body></html>
