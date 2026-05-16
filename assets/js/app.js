@@ -5,12 +5,12 @@ const PL = {
     wallet: { balance: 125.00, currency: 'S/' },
     tickets: [
       { code:'PLG-2026-000128', game:'PremiumGol', date:'16 May 2026', amount:'S/ 5.00', status:'En juego', prize:'Pozo S/ 48,500' },
-      { code:'PMD-2026-000041', game:'Mundial Premium', date:'16 May 2026', amount:'S/ 20.00', status:'Registrado', prize:'Pozo mayor' }
+      { code:'PMD-2026-000041', game:'Premium World Cup', date:'16 May 2026', amount:'S/ 20.00', status:'Registrado', prize:'Pozo mayor' }
     ],
     movements: [
       { date:'16 May 2026', detail:'Recarga de saldo', amount:'+ S/ 100.00' },
       { date:'16 May 2026', detail:'Ticket PremiumGol', amount:'- S/ 5.00' },
-      { date:'16 May 2026', detail:'Ticket Mundial Premium', amount:'- S/ 20.00' }
+      { date:'16 May 2026', detail:'Ticket Premium World Cup', amount:'- S/ 20.00' }
     ]
   },
   load(){ return JSON.parse(localStorage.getItem(this.key) || JSON.stringify(this.defaults)); },

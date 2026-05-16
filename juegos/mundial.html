@@ -1,13 +1,34 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Mundial Premium · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Premium World Cup · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
 <header class="site-header">
-  <a class="brand" href="../index.html"><img src="../assets/img/logos/Logo PremiumLott.png" alt="PremiumLott"><span class="brand-word">PremiumLott</span></a>
+  <a class="brand" href="../index.html"><img src="../assets/img/logos/Logo PremiumLott.png" alt="PremiumLott"></a>
   <button class="btn btn-ghost mobile-toggle" data-mobile-toggle>Menú</button>
   <nav class="nav">
-    <a href="../index.html" data-i18n="nav.home">Inicio</a><a href="../index.html#juegos" data-i18n="nav.games">Juegos</a><a href="../transparencia.html">Transparencia</a><a href="../mis-jugadas.html">Mis jugadas</a><a href="../saldo.html">Saldo</a>
+    <a href="../index.html" data-i18n="nav.home">Inicio</a>
+    <a href="../index.html#juegos" data-i18n="nav.games">Juegos</a>
+    <a href="../transparencia.html">Transparencia</a>
+    <a class="nav-cta" href="mundial.html">Premium World Cup</a>
     <select class="lang-select" data-lang-select><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option><option value="fr">FR</option><option value="de">DE</option><option value="it">IT</option><option value="zh">中文</option><option value="ja">日本語</option></select>
   </nav>
-  <div class="header-actions"><a class="btn btn-outline hide-sm" href="../login.html" data-i18n="nav.login">Iniciar sesión</a><a class="btn btn-primary" href="../registro.html" data-i18n="nav.register">Regístrate</a></div>
+  <div class="header-actions"><a class="btn btn-primary" href="../login.html" data-i18n="nav.login">Iniciar sesión</a></div>
 </header>
-<main class="main"><section class="section"><div class="dashboard-hero"><article class="card"><p class="eyebrow">Mundial Premium</p><h1 class="title">Predice el camino al título</h1><p class="lead">Selecciona clasificados por grupo y completa tu modalidad de participación.</p><div class="form"><label class="card compact"><input type="radio" name="mode" value="Express" checked> Mundial Express · S/ 5</label><label class="card compact"><input type="radio" name="mode" value="Pro"> Mundial Pro · S/ 10</label><label class="card compact"><input type="radio" name="mode" value="Premium"> Mundial Premium · S/ 20</label></div></article><aside class="card ticket-summary"><h3>Resumen</h3><div class="metric"><span>Clasificados elegidos</span><strong><span data-world-count>0</span>/16</strong></div><button class="btn btn-primary" data-confirm-world>Registrar pronóstico</button><p class="mini">La modalidad Premium incluye el recorrido completo hasta campeón.</p></aside></div></section><section class="section"><h2>Fase de grupos</h2><div class="grid grid-4" data-world-groups></div></section></main>
+<main class="main">
+<section class="section world-hero">
+  <div class="section-head compact-head"><div><p class="eyebrow">Premium World Cup</p><h1 class="title">Elige tu camino mundialista.</h1><p class="lead">Tres modalidades para vivir el torneo a tu manera: desde la fase de grupos hasta el campeón.</p></div></div>
+  <div class="world-mode-list">
+    <article class="world-mode-card" data-start-mode="express"><img src="../assets/img/games/worldcup-express.svg" alt="World Cup Express"><div><span class="pill">S/ 5</span><h2>World Cup Express</h2><p>Pronostica la fase de grupos: primeros, segundos y mejores terceros clasificados.</p></div><button class="btn btn-primary">Jugar ahora</button></article>
+    <article class="world-mode-card" data-start-mode="pro"><img src="../assets/img/games/worldcup-pro.svg" alt="World Cup Pro"><div><span class="pill">S/ 10</span><h2>World Cup Pro</h2><p>Completa grupos y lleva tu pronóstico por las llaves hasta cuartos de final.</p></div><button class="btn btn-primary">Jugar ahora</button></article>
+    <article class="world-mode-card mode-featured" data-start-mode="premium"><img src="../assets/img/games/worldcup-premium.svg" alt="World Cup Premium"><div><span class="pill">S/ 20</span><h2>World Cup Premium</h2><p>Construye el fixture completo, define finalistas y corona a tu campeón.</p></div><button class="btn btn-primary">Jugar ahora</button></article>
+  </div>
+</section>
+<section class="section world-play" data-world-play hidden>
+  <div class="dashboard-hero">
+    <article class="card"><p class="eyebrow" data-mode-label>World Cup Express</p><h2 data-mode-title>Fase de grupos</h2><p class="lead" data-mode-description>Selecciona los clasificados de cada grupo.</p><div class="world-steps"><span class="active">Grupos</span><span data-step-knockouts>Llaves</span><span data-step-champion>Campeón</span></div></article>
+    <aside class="card ticket-summary"><h3>Resumen de jugada</h3><div class="metric"><span>Modalidad</span><strong data-summary-mode>Express</strong></div><div class="metric"><span>Ticket</span><strong data-summary-price>S/ 5.00</strong></div><div class="metric"><span>Selecciones</span><strong><span data-world-count>0</span></strong></div><button class="btn btn-primary" data-confirm-world>Confirmar jugada</button><button class="btn btn-outline" data-change-mode type="button">Cambiar modalidad</button></aside>
+  </div>
+</section>
+<section class="section" data-groups-section hidden><div class="section-head"><div><p class="eyebrow">Fase de grupos</p><h2>Clasificados por grupo</h2><p class="lead">Elige posiciones por cada grupo para construir la base de tu pronóstico.</p></div></div><div class="grid grid-3" data-world-groups></div></section>
+<section class="section" data-bracket-section hidden><div class="section-head"><div><p class="eyebrow">Llaves</p><h2 data-bracket-title>Eliminatorias</h2><p class="lead" data-bracket-description>Selecciona ganadores en cada cruce de la fase final.</p></div></div><div class="world-bracket" data-world-bracket></div></section>
+<section class="section" data-champion-section hidden><article class="card champion-card"><p class="eyebrow">Campeón</p><h2>Tu selección campeona</h2><p class="lead">Cierra tu fixture eligiendo al campeón del torneo.</p><div class="field"><label>Campeón</label><select data-champion-select></select></div></article></section>
+</main>
 <footer class="site-footer"><span>© <span data-year></span> PremiumLott. Todos los derechos reservados.</span><div class="social-icons"><a href="#">f</a><a href="#">ig</a><a href="#">tk</a><a href="#">yt</a></div></footer>
 </div><script src="../assets/js/app.js"></script><script src="../assets/js/i18n.js"></script><script src="../assets/js/mundial.js"></script></body></html>
