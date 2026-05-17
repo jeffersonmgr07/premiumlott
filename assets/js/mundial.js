@@ -199,19 +199,16 @@ function matchTeams(match){
 function renderBracket(){
   const mode = worldState.mode;
   if(!mode || mode === 'express') return;
-  const rounds = ROUND_LIMITS[mode] || [];
   const wrap = document.querySelector('[data-world-bracket]');
   if(!wrap) return;
-  document.querySelector('[data-bracket-title]').textContent = mode === 'premium' ? 'Fixture completo tipo llaves' : 'Eliminatorias hasta cuartos';
-  document.querySelector('[data-bracket-description]').textContent = 'Cada ganador avanza automaticamente a la siguiente fase. El selector de ganador solo muestra los dos equipos del cruce.';
+  document.querySelector('[data-bracket-title]').textContent = mode === 'premium' ? 'Fixture completo tipo mapa mundialista' : 'Eliminatorias hasta cuartos';
+  document.querySelector('[data-bracket-description]').textContent = 'Las llaves se alimentan automaticamente desde tus clasificados. Cada ganador avanza al siguiente recuadro hasta llegar al campeon.';
   wrap.innerHTML = `
     <article class="card best-thirds-panel">
       <div class="round-title"><div><span class="pill">Mejores terceros</span><h3>Selecciona los 8 mejores terceros</h3></div><small>Estos equipos completan la ronda de 32.</small></div>
       <div class="best-third-grid">${Array.from({length:8}).map((_,i) => `<div class="field"><label>Mejor 3.º ${i+1}</label><select data-best-third="${i}">${optionList(thirdPlaceTeams(), 'Selecciona tercero', worldState.bestThirds[i] || '')}</select></div>`).join('')}</div>
     </article>
-    <div class="bracket-map ${mode === 'premium' ? 'bracket-premium' : 'bracket-pro'}">
-      ${rounds.map(roundKey => renderRound(roundKey)).join('')}
-    </div>`;
+    ${mode === 'premium' ? renderTournamentMap() : renderProBracketMap()}`;
   wrap.querySelectorAll('select[data-best-third]').forEach(sel => sel.addEventListener('change', e => {
     const i = Number(e.target.dataset.bestThird);
     worldState.bestThirds[i] = e.target.value;
@@ -223,12 +220,76 @@ function renderBracket(){
   wrap.querySelectorAll('button[data-winner]').forEach(btn => btn.addEventListener('click', e => {
     const match = e.currentTarget.dataset.match;
     worldState.winners[match] = e.currentTarget.dataset.winner;
+    if(match === 'final_1') worldState.champion = e.currentTarget.dataset.winner;
     trimInvalidWinners();
     renderBracket();
     renderChampion();
     updateCount();
   }));
   renderChampion();
+}
+
+function renderTournamentMap(){
+  const r32 = KNOCKOUT_FIXTURES.ronda32;
+  const oct = KNOCKOUT_FIXTURES.octavos;
+  const qf = KNOCKOUT_FIXTURES.cuartos;
+  const sf = KNOCKOUT_FIXTURES.semis;
+  return `<div class="tournament-map" aria-label="Fixture completo Premium World Cup">
+    <div class="map-side map-left">
+      ${renderMapColumn('ronda32','Ronda 32','R32', r32.slice(0,8), 'left')}
+      ${renderMapColumn('octavos','Octavos','OCT', oct.slice(0,4), 'left')}
+      ${renderMapColumn('cuartos','Cuartos','4TOS', qf.slice(0,2), 'left')}
+      ${renderMapColumn('semis','Semifinal','SF', sf.slice(0,1), 'left')}
+    </div>
+    ${renderFinalHub()}
+    <div class="map-side map-right">
+      ${renderMapColumn('semis','Semifinal','SF', sf.slice(1,2), 'right')}
+      ${renderMapColumn('cuartos','Cuartos','4TOS', qf.slice(2,4), 'right')}
+      ${renderMapColumn('octavos','Octavos','OCT', oct.slice(4,8), 'right')}
+      ${renderMapColumn('ronda32','Ronda 32','R32', r32.slice(8,16), 'right')}
+    </div>
+  </div>`;
+}
+
+function renderProBracketMap(){
+  return `<div class="tournament-map pro-map" aria-label="Fixture Pro hasta cuartos">
+    <div class="map-side map-left">
+      ${renderMapColumn('ronda32','Ronda 32','R32', KNOCKOUT_FIXTURES.ronda32.slice(0,8), 'left')}
+      ${renderMapColumn('octavos','Octavos','OCT', KNOCKOUT_FIXTURES.octavos.slice(0,4), 'left')}
+      ${renderMapColumn('cuartos','Cuartos','4TOS', KNOCKOUT_FIXTURES.cuartos.slice(0,2), 'left')}
+    </div>
+    <div class="pro-center card">
+      <span class="pill">World Cup Pro</span>
+      <h3>Meta Pro</h3>
+      <p>Tu jugada se completa al definir los ganadores de cuartos.</p>
+    </div>
+    <div class="map-side map-right">
+      ${renderMapColumn('cuartos','Cuartos','4TOS', KNOCKOUT_FIXTURES.cuartos.slice(2,4), 'right')}
+      ${renderMapColumn('octavos','Octavos','OCT', KNOCKOUT_FIXTURES.octavos.slice(4,8), 'right')}
+      ${renderMapColumn('ronda32','Ronda 32','R32', KNOCKOUT_FIXTURES.ronda32.slice(8,16), 'right')}
+    </div>
+  </div>`;
+}
+
+function renderMapColumn(roundKey, title, short, matches, side){
+  return `<section class="map-column map-${roundKey} map-${side}" data-round="${roundKey}">
+    <div class="map-column-head"><span>${short}</span><h3>${title}</h3></div>
+    <div class="map-matches">${matches.map(match => renderMatch(match, 'map-node')).join('')}</div>
+  </section>`;
+}
+
+function renderFinalHub(){
+  const championName = worldState.winners.final_1 || worldState.champion || '';
+  const champion = championName ? findTeam(championName) : null;
+  return `<div class="final-hub">
+    <div class="winner-crown ${champion ? 'has-champion' : ''}">
+      <div class="trophy-orb">🏆</div>
+      <small>GANADOR</small>
+      <strong>${champion ? esc(teamLabel(champion)) : 'Campeón por definir'}</strong>
+      <span>Premium World Cup</span>
+    </div>
+    <div class="final-match-wrap">${renderMatch(KNOCKOUT_FIXTURES.final[0], 'final-node')}</div>
+  </div>`;
 }
 
 function sanitizeBestThirds(changedIndex){
@@ -263,13 +324,13 @@ function renderRound(roundKey){
   </section>`;
 }
 
-function renderMatch(match){
+function renderMatch(match, extraClass=''){
   const teamA = sourceTeam(match.a);
   const teamB = sourceTeam(match.b);
   const teams = matchTeams(match);
   const picked = worldState.winners[match.id] || '';
   const isReady = teams.length === 2;
-  return `<article class="bracket-node ${picked ? 'is-picked' : ''}">
+  return `<article class="bracket-node ${extraClass} ${picked ? 'is-picked' : ''}">
     <div class="node-meta"><strong>${match.label}</strong><span>${esc(match.date)} · ${esc(match.time)}</span></div>
     <div class="node-venue">${esc(match.venue)}</div>
     <div class="node-teams">
@@ -320,17 +381,57 @@ function openConfirmBridge(){
   document.querySelector('[data-modal-payment]').hidden = !isLogged;
   document.querySelector('[data-payment-mode]').textContent = mode.name;
   document.querySelector('[data-payment-total]').textContent = money(mode.price);
+  const ticketBox = document.querySelector('[data-payment-ticket]');
+  if(ticketBox) ticketBox.innerHTML = renderTicketPreview();
   modal.hidden = false;
 }
 function closeWorldModal(){ const modal = document.querySelector('[data-world-modal]'); if(modal) modal.hidden = true; }
-function completePaymentFlow(){
+function renderTicketPreview(){
   const mode = WORLD_MODES[worldState.mode || 'express'];
+  const champion = worldState.winners.final_1 || worldState.champion || 'Por definir';
+  const filledGroups = Object.values(worldState.groupPicks).filter(p => p.first || p.second || p.third).length;
+  const filledWinners = Object.values(worldState.winners).filter(Boolean).length;
+  return `<div class="ticket-mini">
+    <div><span>Juego</span><strong>Premium World Cup</strong></div>
+    <div><span>Modalidad</span><strong>${esc(mode.name)}</strong></div>
+    <div><span>Grupos completados</span><strong>${filledGroups}/12</strong></div>
+    <div><span>Llaves elegidas</span><strong>${filledWinners}</strong></div>
+    <div><span>Campeon elegido</span><strong>${esc(champion)}</strong></div>
+  </div>`;
+}
+
+function collectTicketData(code){
+  const mode = WORLD_MODES[worldState.mode || 'express'];
+  return {
+    code,
+    game:'Premium World Cup',
+    mode:mode.name,
+    price:mode.price,
+    status:'Pendiente de pago',
+    date:new Date().toISOString().slice(0,10),
+    groups:worldState.groupPicks,
+    bestThirds:worldState.bestThirds,
+    winners:worldState.winners,
+    champion:worldState.winners.final_1 || worldState.champion || ''
+  };
+}
+
+function completePaymentFlow(){
   const tickets = JSON.parse(localStorage.getItem('premiumlott_tickets') || '[]');
   const code = 'PWC-' + Date.now().toString().slice(-8);
-  tickets.unshift({ code, game:'Premium World Cup', mode:mode.name, price:mode.price, status:'Registrada', date:new Date().toISOString().slice(0,10) });
+  const ticket = collectTicketData(code);
+  tickets.unshift(ticket);
   localStorage.setItem('premiumlott_tickets', JSON.stringify(tickets));
-  alert('Jugada registrada: ' + code);
-  closeWorldModal();
+  const modalPayment = document.querySelector('[data-modal-payment]');
+  if(modalPayment){
+    modalPayment.innerHTML = `<p class="eyebrow">Ticket generado</p>
+      <h2>Jugada lista para comprar</h2>
+      <div class="ticket-code">${esc(code)}</div>
+      ${renderTicketPreview()}
+      <p class="muted">Tu jugada quedó preparada. En la integración final, este paso continuará con Mercado Pago y confirmará el estado del ticket.</p>
+      <div class="modal-actions"><a class="btn btn-primary" href="../mis-jugadas.html">Ver mis jugadas</a><button class="btn btn-outline" type="button" data-close-world-modal>Volver</button></div>`;
+    modalPayment.querySelector('[data-close-world-modal]')?.addEventListener('click', closeWorldModal);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initMundial);
