@@ -1,19 +1,28 @@
-# PremiumLott Prototipo V1
+# PremiumLott V2
 
-Frontend estático preparada para GitHub Pages. Incluye landing, login, registro, dashboard, saldo, mis jugadas, transparencia y juegos iniciales PremiumGol, PremiumBall y Premium World Cup.
+Prototipo frontend estático de PremiumLott preparado para GitHub Pages.
 
-## Publicación
-Sube todo el contenido de esta carpeta al repositorio de GitHub Pages. El archivo principal es `index.html`.
+## Cambios principales de esta versión
 
-## Estructura
-- `assets/css`: estilos principales.
-- `assets/js`: lógica estática de interfaz, cuenta, saldo y jugadas.
-- `assets/data`: catálogos JSON de juegos, idiomas y programas.
-- `juegos`: páginas de juegos.
-- `pages`: páginas legales y ayuda.
+- Estado global unificado en `premiumlott_state_v2`.
+- Migración automática desde `premiumlott_state_v1` y tickets anteriores de Premium World Cup.
+- Login, usuario, wallet, tickets y movimientos conectados a una sola fuente de datos.
+- PremiumGol ahora valida sesión, saldo y 8 pronósticos completos.
+- Premium World Cup rediseñado con flujo por pasos, grupos desplegables, mejores terceros y bracket visual.
+- Tickets de todos los juegos aparecen en `Mis jugadas`.
+- Descuento de saldo y movimientos coherentes al registrar tickets.
+- Hero de inicio corregido para no depender de videos faltantes.
+- Assets duplicados en la carpeta raíz `img/` eliminados; la ruta estándar es `assets/img/`.
 
+## Archivos clave
 
-## Premium World Cup V3
-- El hero del index soporta tres videos de fondo en assets/videos/.
-- La sección mundial usa grupos 2026 actualizados y llaves con ganadores dependientes de cada cruce.
-- El botón Confirmar jugada abre acceso de cliente o pasarela Mercado Pago según estado de sesión.
+- `assets/js/app.js`: estado global, sesión, tickets, wallet y utilidades.
+- `assets/js/auth.js`: login y registro.
+- `assets/js/premiumgol.js`: lógica validada de PremiumGol.
+- `assets/js/mundial.js`: flujo completo de Premium World Cup.
+- `assets/js/wallet.js`: recargas y movimientos.
+- `assets/css/main.css`: estilos generales y rediseño World Cup.
+
+## Nota
+
+Esta versión sigue siendo un prototipo frontend. Para producción real se necesita backend, pasarela de pagos real, KYC, autorización regulatoria, seguridad, auditoría y base de datos.
