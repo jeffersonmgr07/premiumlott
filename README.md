@@ -26,3 +26,12 @@ Prototipo frontend estático de PremiumLott preparado para GitHub Pages.
 ## Nota
 
 Esta versión sigue siendo un prototipo frontend. Para producción real se necesita backend, pasarela de pagos real, KYC, autorización regulatoria, seguridad, auditoría y base de datos.
+
+
+## V3 — Worldgroup Premium profesional
+
+- Se eliminó la selección de modalidades en la pantalla mundialista.
+- La página `juegos/mundial.html` entra directamente a Worldgroup Premium.
+- El fixture ahora se organiza en bloques verticales desplegables: grupos, mejores terceros, ronda de 32, octavos, cuartos, semifinales, final y campeón.
+- La experiencia fue optimizada para mobile-first con cards compactas, resumen sticky y progreso visual.
+- Express y Pro quedan como modalidades futuras, no visibles en la interfaz actual.

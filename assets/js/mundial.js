@@ -1,12 +1,18 @@
-const WORLD_MODES = {
-  express: { name: 'World Cup Express', short: 'Express', price: 5, label: 'Fase de grupos', description: 'Pronostica los clasificados de cada grupo y los 8 mejores terceros.', maxRound: 'groups' },
-  pro: { name: 'World Cup Pro', short: 'Pro', price: 10, label: 'Grupos + llaves hasta cuartos', description: 'Completa grupos, mejores terceros y define ganadores hasta cuartos de final.', maxRound: 'cuartos' },
-  premium: { name: 'World Cup Premium', short: 'Premium', price: 20, label: 'Fixture completo', description: 'Construye el camino completo del torneo y corona a tu campeón.', maxRound: 'final' }
+const WORLD_PREMIUM = {
+  name: 'Worldgroup Premium',
+  game: 'Premium World Cup',
+  price: 20,
+  amountLabel: 'S/ 20.00',
+  prize: 'Pozo mayor mundialista'
 };
 
-const ROUND_LIMITS = { express: [], pro: ['ronda32','octavos','cuartos'], premium: ['ronda32','octavos','cuartos','semis','final'] };
-const ROUND_LABELS = { ronda32:'Ronda de 32', octavos:'Octavos', cuartos:'Cuartos', semis:'Semifinales', final:'Final' };
-const POSITIONS = { first:'1.º', second:'2.º', third:'3.º' };
+const ROUNDS = [
+  { key: 'ronda32', title: 'Ronda de 32', short: 'R32', total: 16, description: 'Define los ganadores de los 16 cruces iniciales.' },
+  { key: 'octavos', title: 'Octavos de final', short: 'OCT', total: 8, description: 'Los clasificados avanzan hacia la fase decisiva.' },
+  { key: 'cuartos', title: 'Cuartos de final', short: '4TOS', total: 4, description: 'Elige los cuatro semifinalistas del torneo.' },
+  { key: 'semis', title: 'Semifinales', short: 'SEM', total: 2, description: 'Define los finalistas.' },
+  { key: 'final', title: 'Final', short: 'FINAL', total: 1, description: 'Elige al ganador de la gran final.' }
+];
 
 const KNOCKOUT_FIXTURES = {
   ronda32: [
@@ -67,205 +73,251 @@ const GROUP_FIXTURES = {
   L:['17 jun. 4:00 p.m. ET - Inglaterra vs Croacia - AT&T Stadium','17 jun. 7:00 p.m. ET - Ghana vs Panama - BMO Field','23 jun. 4:00 p.m. ET - Inglaterra vs Ghana - Gillette Stadium','23 jun. 7:00 p.m. ET - Panama vs Croacia - BMO Field','27 jun. 5:00 p.m. ET - Panama vs Inglaterra - MetLife Stadium','27 jun. 5:00 p.m. ET - Croacia vs Ghana - Lincoln Financial Field']
 };
 
-
-
-const worldState = { mode:null, teams:[], groups:[], groupPicks:{}, bestThirds:Array(8).fill(''), winners:{}, champion:'' };
+const DRAFT_KEY = 'premiumlott_worldgroup_premium_draft_v3';
+const worldState = { teams: [], groups: [], groupPicks: {}, bestThirds: Array(8).fill(''), winners: {}, champion: '' };
 const $ = (sel, ctx=document) => ctx.querySelector(sel);
 const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
-const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const money = value => PL ? PL.money(value) : 'S/ ' + Number(value || 0).toFixed(2);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = value => window.PL ? PL.money(value) : 'S/ ' + Number(value || 0).toFixed(2);
+
 function findTeam(name){ return worldState.teams.find(t => t.name === name) || { name:name || '', flag:'' }; }
 function teamLabel(team){ return team ? `${team.flag || ''} ${team.name || team}`.trim() : ''; }
-function optionList(teams, placeholder, selected){
-  return `<option value="">${esc(placeholder)}</option>` + teams.map(t => `<option value="${esc(t.name)}" ${selected===t.name?'selected':''}>${esc(teamLabel(t))}</option>`).join('');
-}
-function selectedFromGroups(){ return Object.values(worldState.groupPicks).flatMap(p => [p.first,p.second,p.third]).filter(Boolean); }
-function thirdPool(){ return Object.values(worldState.groupPicks).map(p => p.third).filter(Boolean).map(findTeam); }
 function groupPick(group, pos){ return worldState.groupPicks[group]?.[pos] || ''; }
+function groupTeams(groupKey){ return (worldState.groups.find(g => g.group === groupKey)?.teams || []); }
+function thirdPool(){ return Object.values(worldState.groupPicks).map(p => p.third).filter(Boolean).map(findTeam); }
+function groupIsComplete(group){ const p=worldState.groupPicks[group] || {}; return !!(p.first && p.second && p.third); }
+function completedGroups(){ return worldState.groups.filter(g => groupIsComplete(g.group)).length; }
+function groupsComplete(){ return worldState.groups.length > 0 && completedGroups() === worldState.groups.length; }
+function bestThirdsCount(){ return worldState.bestThirds.filter(Boolean).length; }
+function bestThirdsComplete(){ return bestThirdsCount() === 8; }
+function roundComplete(round){ return (KNOCKOUT_FIXTURES[round] || []).every(m => !!worldState.winners[m.id]); }
+function roundCount(round){ return (KNOCKOUT_FIXTURES[round] || []).filter(m => !!worldState.winners[m.id]).length; }
+function previousRoundsComplete(round){
+  if(round === 'ronda32') return groupsComplete() && bestThirdsComplete();
+  const order = ROUNDS.map(r => r.key);
+  const idx = order.indexOf(round);
+  return groupsComplete() && bestThirdsComplete() && order.slice(0, idx).every(roundComplete);
+}
 function totalSelections(){
-  let n=0;
+  let n = 0;
   Object.values(worldState.groupPicks).forEach(p => ['first','second','third'].forEach(k => { if(p[k]) n++; }));
-  worldState.bestThirds.forEach(v => { if(v) n++; });
-  Object.values(worldState.winners).forEach(v => { if(v) n++; });
+  n += bestThirdsCount();
+  n += Object.values(worldState.winners).filter(Boolean).length;
   if(worldState.champion) n++;
   return n;
 }
-function requiredSelections(){
-  if(worldState.mode === 'express') return 36 + 8;
-  if(worldState.mode === 'pro') return 36 + 8 + 16 + 8 + 4;
-  if(worldState.mode === 'premium') return 36 + 8 + 16 + 8 + 4 + 2 + 1 + 1;
-  return 0;
+function requiredSelections(){ return 36 + 8 + 16 + 8 + 4 + 2 + 1 + 1; }
+function allRequiredComplete(){ return groupsComplete() && bestThirdsComplete() && ROUNDS.every(r => roundComplete(r.key)) && !!worldState.champion; }
+function optionList(teams, placeholder, selected){
+  return `<option value="">${esc(placeholder)}</option>` + teams.map(t => `<option value="${esc(t.name)}" ${selected===t.name?'selected':''}>${esc(teamLabel(t))}</option>`).join('');
 }
-function groupIsComplete(group){ const p=worldState.groupPicks[group] || {}; return !!(p.first && p.second && p.third); }
-function groupsComplete(){ return worldState.groups.length && worldState.groups.every(g => groupIsComplete(g.group)); }
-function bestThirdsComplete(){ return worldState.bestThirds.filter(Boolean).length === 8; }
-function modeRounds(){ return ROUND_LIMITS[worldState.mode] || []; }
-function roundComplete(round){ return (KNOCKOUT_FIXTURES[round] || []).every(m => !!worldState.winners[m.id]); }
-function previousRoundsComplete(round){
-  if(round === 'ronda32') return groupsComplete() && bestThirdsComplete();
-  const order = ['ronda32','octavos','cuartos','semis','final'];
-  const idx = order.indexOf(round);
-  return order.slice(0,idx).every(roundComplete);
-}
-function allRequiredComplete(){
-  if(!groupsComplete()) return false;
-  if(!bestThirdsComplete()) return false;
-  if(worldState.mode === 'express') return true;
-  const rounds = modeRounds();
-  if(!rounds.every(roundComplete)) return false;
-  if(worldState.mode === 'premium' && !worldState.champion) return false;
-  return true;
+function draft(){ return { groupPicks: worldState.groupPicks, bestThirds: worldState.bestThirds, winners: worldState.winners, champion: worldState.champion }; }
+function saveDraft(){ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft())); }
+function loadDraft(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+    worldState.groupPicks = raw.groupPicks || {};
+    worldState.bestThirds = Array.isArray(raw.bestThirds) ? raw.bestThirds.slice(0,8).concat(Array(8).fill('')).slice(0,8) : Array(8).fill('');
+    worldState.winners = raw.winners || {};
+    worldState.champion = raw.champion || '';
+  } catch(e){ worldState.groupPicks = {}; worldState.bestThirds = Array(8).fill(''); worldState.winners = {}; worldState.champion = ''; }
 }
 
 async function initMundial(){
-  if(!$('[data-start-mode]')) return;
-  const data = await fetch('../assets/data/mundial-fixture.json').then(r=>r.json());
-  worldState.groups = data.groups;
-  worldState.teams = data.groups.flatMap(g => g.teams);
-  $$('[data-start-mode]').forEach(card => card.addEventListener('click', () => startMode(card.dataset.startMode)));
-  $('[data-change-mode]')?.addEventListener('click', resetToLanding);
+  if(!$('[data-worldgroup-app]')) return;
+  const data = await fetch('../assets/data/mundial-fixture.json').then(r => r.json());
+  worldState.groups = data.groups || [];
+  worldState.teams = worldState.groups.flatMap(g => g.teams || []);
+  loadDraft();
+  bindStaticEvents();
+  renderAll();
+}
+
+function bindStaticEvents(){
   $('[data-confirm-world]')?.addEventListener('click', openConfirmBridge);
+  $('[data-reset-world]')?.addEventListener('click', () => {
+    if(confirm('¿Quieres limpiar tu fixture y empezar de nuevo?')){
+      localStorage.removeItem(DRAFT_KEY);
+      worldState.groupPicks = {}; worldState.bestThirds = Array(8).fill(''); worldState.winners = {}; worldState.champion = '';
+      renderAll();
+    }
+  });
   $$('[data-close-world-modal]').forEach(btn => btn.addEventListener('click', closeWorldModal));
   $('[data-pay-mercado]')?.addEventListener('click', completePaymentFlow);
 }
 
-function startMode(modeKey){
-  worldState.mode = modeKey;
-  worldState.groupPicks = {};
-  worldState.bestThirds = Array(8).fill('');
-  worldState.winners = {};
-  worldState.champion = '';
-  $('.worldcup-landing').hidden = true;
-  $('[data-world-play]').hidden = false;
-  $('[data-groups-section]').hidden = false;
-  $('[data-bracket-section]').hidden = modeKey === 'express';
-  $('[data-champion-section]').hidden = modeKey !== 'premium';
-  const mode = WORLD_MODES[modeKey];
-  $('[data-mode-label]').textContent = mode.name;
-  $('[data-mode-title]').textContent = mode.label;
-  $('[data-mode-description]').textContent = mode.description;
-  $('[data-summary-mode]').textContent = mode.short;
-  $('[data-summary-price]').textContent = money(mode.price);
-  $('[data-step-knockouts]').classList.toggle('active', modeKey !== 'express');
-  $('[data-step-champion]').classList.toggle('active', modeKey === 'premium');
-  renderGroups();
-  renderBestThirds();
-  renderBracket();
-  renderChampion();
-  updateSummary();
-  $('[data-world-play]').scrollIntoView({ behavior:'smooth', block:'start' });
-}
-function resetToLanding(){
-  $('.worldcup-landing').hidden = false;
-  $('[data-world-play]').hidden = true;
-  $('[data-groups-section]').hidden = true;
-  $('[data-bracket-section]').hidden = true;
-  $('[data-champion-section]').hidden = true;
-  $('.worldcup-landing').scrollIntoView({ behavior:'smooth', block:'start' });
-}
-
-function renderGroups(){
-  const wrap = $('[data-world-groups]'); if(!wrap) return;
-  wrap.innerHTML = worldState.groups.map((group, index) => {
-    const picks = worldState.groupPicks[group.group] || {};
-    const complete = groupIsComplete(group.group);
-    const fixtures = GROUP_FIXTURES[group.group] || [];
-    return `<details class="world-group-accordion card ${complete ? 'is-complete' : ''}" ${index===0?'open':''}>
-      <summary>
-        <span class="group-summary-title">Grupo ${group.group}</span>
-        <span class="group-status">${complete ? 'Completo' : 'Pendiente'}</span>
-      </summary>
-      <div class="group-teams-mini">${group.teams.map(t => `<span><b>${esc(t.flag)}</b>${esc(t.name)}</span>`).join('')}</div>
-      <div class="group-selects compact-selects">
-        ${['first','second','third'].map(pos => `<div class="field"><label>${POSITIONS[pos]} clasificado</label><select data-group="${group.group}" data-pos="${pos}">${optionList(group.teams, 'Selecciona equipo', picks[pos])}</select></div>`).join('')}
-      </div>
-      <details class="group-calendar"><summary>Ver fixture del grupo</summary><div>${fixtures.map(f=>`<small>${esc(f)}</small>`).join('')}</div></details>
-    </details>`;
-  }).join('') + `<article class="best-thirds-card card" data-best-thirds-card></article>`;
-  $$('[data-group]').forEach(sel => sel.addEventListener('change', onGroupChange));
-}
-function onGroupChange(e){
-  const group = e.target.dataset.group, pos = e.target.dataset.pos, value = e.target.value;
-  worldState.groupPicks[group] ||= { first:'', second:'', third:'' };
-  if(value){
-    for(const key of ['first','second','third']) if(key !== pos && worldState.groupPicks[group][key] === value) worldState.groupPicks[group][key] = '';
-  }
-  worldState.groupPicks[group][pos] = value;
-  worldState.bestThirds = worldState.bestThirds.map(v => selectedFromGroups().includes(v) ? v : '');
+function renderAll(){
   trimInvalidWinners();
   renderGroups();
   renderBestThirds();
-  renderBracket();
-  renderChampion();
+  renderRounds();
+  renderChampionBlock();
+  renderProgress();
   updateSummary();
+  saveDraft();
 }
+
+function renderGroups(){
+  const container = $('[data-world-groups]');
+  if(!container) return;
+  container.innerHTML = worldState.groups.map((group, idx) => {
+    const complete = groupIsComplete(group.group);
+    const picks = worldState.groupPicks[group.group] || {};
+    const open = !complete && idx < 2 ? 'open' : '';
+    const summary = complete ? `${esc(picks.first)} · ${esc(picks.second)} · ${esc(picks.third)}` : 'Selecciona 1.º, 2.º y 3.º';
+    return `<details class="wc-accordion wc-group-card ${complete ? 'is-complete' : 'is-pending'}" ${open} data-group-card="${esc(group.group)}">
+      <summary class="wc-accordion-summary">
+        <span><small>Grupo ${esc(group.group)}</small><strong>${complete ? 'Grupo completo' : 'Clasificación del grupo'}</strong><em>${summary}</em></span>
+        <b>${complete ? 'Completo' : 'Pendiente'}</b>
+      </summary>
+      <div class="wc-group-body">
+        <div class="wc-team-grid">${group.teams.map(t => `<span><i>${esc(t.flag)}</i>${esc(t.name)}</span>`).join('')}</div>
+        <div class="wc-select-grid">
+          ${renderGroupSelect(group, 'first', '1.º lugar')}
+          ${renderGroupSelect(group, 'second', '2.º lugar')}
+          ${renderGroupSelect(group, 'third', '3.º lugar')}
+        </div>
+        <details class="wc-mini-fixture"><summary>Ver fixture y horarios del grupo</summary><div>${(GROUP_FIXTURES[group.group] || []).map(item => `<small>${esc(item)}</small>`).join('')}</div></details>
+      </div>
+    </details>`;
+  }).join('');
+  $$('[data-group-select]', container).forEach(sel => sel.addEventListener('change', onGroupChange));
+}
+
+function renderGroupSelect(group, pos, label){
+  const selected = groupPick(group.group, pos);
+  return `<label class="field"><span>${label}</span><select data-group-select data-group="${esc(group.group)}" data-pos="${pos}">${optionList(group.teams, 'Selecciona equipo', selected)}</select></label>`;
+}
+
+function onGroupChange(e){
+  const group = e.currentTarget.dataset.group;
+  const pos = e.currentTarget.dataset.pos;
+  const value = e.currentTarget.value;
+  worldState.groupPicks[group] = worldState.groupPicks[group] || { first:'', second:'', third:'' };
+  const duplicatePos = Object.entries(worldState.groupPicks[group]).find(([key, val]) => key !== pos && val && val === value);
+  if(value && duplicatePos){
+    alert('No puedes repetir el mismo equipo dentro del grupo.');
+    e.currentTarget.value = '';
+    worldState.groupPicks[group][pos] = '';
+  } else {
+    worldState.groupPicks[group][pos] = value;
+  }
+  sanitizeBestThirds();
+  trimInvalidWinners();
+  renderAll();
+}
+
 function renderBestThirds(){
-  const box = $('[data-best-thirds-card]'); if(!box) return;
+  const box = $('[data-best-thirds]');
+  if(!box) return;
   const pool = thirdPool();
-  const disabled = !groupsComplete();
-  box.innerHTML = `<div class="best-third-head"><p class="eyebrow">Mejores terceros</p><h3>Elige 8 clasificados</h3><p class="muted">Se activan cuando completes los 12 grupos.</p></div>
-    <div class="best-third-grid">
-      ${Array.from({length:8}).map((_,i)=>`<div class="field"><label>Mejor 3.º ${i+1}</label><select data-best-third="${i}" ${disabled?'disabled':''}>${optionList(pool, disabled ? 'Completa grupos primero' : 'Selecciona tercero', worldState.bestThirds[i])}</select></div>`).join('')}
-    </div>`;
-  $$('[data-best-third]').forEach(sel => sel.addEventListener('change', e => {
-    const idx = Number(e.target.dataset.bestThird);
-    const val = e.target.value;
-    worldState.bestThirds[idx] = val;
-    worldState.bestThirds = worldState.bestThirds.map((v,i) => i !== idx && v === val ? '' : v);
+  const locked = !groupsComplete();
+  box.innerHTML = `<details class="wc-accordion wc-stage-card ${bestThirdsComplete() ? 'is-complete' : ''}" ${groupsComplete() && !bestThirdsComplete() ? 'open' : ''}>
+    <summary class="wc-accordion-summary">
+      <span><small>Repesca mundialista</small><strong>8 mejores terceros</strong><em>${locked ? 'Completa primero los 12 grupos' : `${bestThirdsCount()}/8 seleccionados`}</em></span>
+      <b>${bestThirdsComplete() ? 'Completo' : locked ? 'Bloqueado' : 'En progreso'}</b>
+    </summary>
+    <div class="wc-stage-body">
+      <p class="muted">Elige los 8 mejores terceros que avanzan a la ronda de 32. No se permiten duplicados.</p>
+      <div class="wc-third-grid">
+        ${Array.from({length:8}).map((_, i) => `<label class="field"><span>Mejor tercero ${i+1}</span><select data-third-index="${i}" ${locked ? 'disabled' : ''}>${optionList(pool, locked ? 'Bloqueado' : 'Selecciona tercer puesto', worldState.bestThirds[i])}</select></label>`).join('')}
+      </div>
+    </div>
+  </details>`;
+  $$('[data-third-index]', box).forEach(sel => sel.addEventListener('change', e => {
+    const idx = Number(e.currentTarget.dataset.thirdIndex);
+    const value = e.currentTarget.value;
+    if(value && worldState.bestThirds.some((t, i) => i !== idx && t === value)){
+      alert('Ese tercer puesto ya fue seleccionado.');
+      e.currentTarget.value = '';
+      worldState.bestThirds[idx] = '';
+    } else {
+      worldState.bestThirds[idx] = value;
+    }
     trimInvalidWinners();
-    renderBestThirds();
-    renderBracket();
-    renderChampion();
-    updateSummary();
+    renderAll();
   }));
 }
 
-function renderBracket(){
-  const realWrap = $('[data-world-bracket]'); if(!realWrap || worldState.mode === 'express') return;
-  const mode = WORLD_MODES[worldState.mode];
-  $('[data-bracket-title]').textContent = mode.maxRound === 'cuartos' ? 'Llaves hasta cuartos' : 'Fixture completo';
-  $('[data-bracket-description]').textContent = groupsComplete() && bestThirdsComplete() ? 'Selecciona el ganador de cada cruce. El bracket se irá completando automáticamente.' : 'Primero completa todos los grupos y mejores terceros para activar las llaves.';
-  const rounds = modeRounds();
-  realWrap.innerHTML = `<div class="world-flow-bracket ${worldState.mode === 'premium' ? 'premium-bracket' : 'pro-bracket'}">
-    ${rounds.map(round => renderRoundColumn(round)).join('')}
-    ${worldState.mode === 'premium' ? renderChampionHub() : renderProHub()}
-  </div>`;
-  $$('[data-winner]').forEach(btn => btn.addEventListener('click', e => {
+function renderRounds(){
+  const box = $('[data-rounds]');
+  if(!box) return;
+  box.innerHTML = ROUNDS.map((round, idx) => renderRoundBlock(round, idx)).join('');
+  $$('[data-winner]', box).forEach(btn => btn.addEventListener('click', e => {
     worldState.winners[e.currentTarget.dataset.match] = e.currentTarget.dataset.winner;
     if(e.currentTarget.dataset.match === 'final_1') worldState.champion = e.currentTarget.dataset.winner;
     trimInvalidWinners();
-    renderBracket();
-    renderChampion();
-    updateSummary();
+    renderAll();
   }));
 }
-function renderRoundColumn(round){
-  const locked = !previousRoundsComplete(round);
-  return `<section class="flow-round ${locked ? 'is-locked' : ''}">
-    <div class="flow-round-head"><span>${esc(roundShort(round))}</span><h3>${esc(ROUND_LABELS[round])}</h3></div>
-    <div class="flow-match-list">${(KNOCKOUT_FIXTURES[round] || []).map(m => renderMatch(m, locked)).join('')}</div>
-  </section>`;
+
+function renderRoundBlock(round, idx){
+  const locked = !previousRoundsComplete(round.key);
+  const count = roundCount(round.key);
+  const total = (KNOCKOUT_FIXTURES[round.key] || []).length;
+  const isComplete = count === total;
+  const open = !locked && !isComplete ? 'open' : '';
+  const status = locked ? 'Bloqueado' : isComplete ? 'Completo' : `${count}/${total}`;
+  return `<details class="wc-accordion wc-stage-card wc-round-block ${isComplete ? 'is-complete' : ''} ${locked ? 'is-locked' : ''}" ${open} data-round="${round.key}">
+    <summary class="wc-accordion-summary">
+      <span><small>${esc(round.short)}</small><strong>${esc(round.title)}</strong><em>${esc(round.description)}</em></span>
+      <b>${status}</b>
+    </summary>
+    <div class="wc-stage-body">
+      ${locked ? `<div class="notice">Completa las fases anteriores para activar ${esc(round.title)}.</div>` : ''}
+      <div class="wc-match-grid ${round.key === 'final' ? 'is-final-grid' : ''}">${(KNOCKOUT_FIXTURES[round.key] || []).map(match => renderMatchCard(match, locked)).join('')}</div>
+    </div>
+  </details>`;
 }
-function roundShort(round){ return ({ronda32:'R32',octavos:'OCT',cuartos:'4TOS',semis:'SEM',final:'FINAL'}[round] || round); }
-function renderMatch(match, locked){
+
+function renderMatchCard(match, locked){
   const teams = matchTeams(match);
-  const picked = worldState.winners[match.id] || '';
   const ready = !locked && teams.length === 2;
-  return `<article class="flow-match ${picked ? 'is-picked' : ''} ${ready ? '' : 'is-disabled'}">
-    <div class="flow-match-meta"><strong>${esc(match.label)}</strong><small>${esc(match.date)} · ${esc(match.time)}</small></div>
-    <div class="flow-slots">${[match.a, match.b].map(src => renderSlot(sourceTeam(src), src)).join('')}</div>
-    <div class="flow-actions">${ready ? teams.map(t => `<button type="button" class="winner-chip ${picked===t.name?'active':''}" data-match="${match.id}" data-winner="${esc(t.name)}">${esc(teamLabel(t))}</button>`).join('') : `<small>${locked ? 'Bloqueado por ronda anterior' : 'Completa el cruce previo'}</small>`}</div>
+  const picked = worldState.winners[match.id] || '';
+  return `<article class="wc-match-card ${picked ? 'is-picked' : ''} ${!ready ? 'is-disabled' : ''}">
+    <div class="wc-match-top"><span>${esc(match.label)}</span><small>${esc(match.date)} · ${esc(match.time)}</small></div>
+    <div class="wc-venue">${esc(match.venue)}</div>
+    <div class="wc-versus">
+      ${renderTeamSlot(sourceTeam(match.a), match.a)}
+      <i>vs</i>
+      ${renderTeamSlot(sourceTeam(match.b), match.b)}
+    </div>
+    <div class="wc-winner-actions">
+      ${ready ? teams.map(t => `<button type="button" class="winner-chip ${picked===t.name?'active':''}" data-match="${match.id}" data-winner="${esc(t.name)}">${esc(teamLabel(t))}</button>`).join('') : '<small>Esperando clasificados anteriores.</small>'}
+    </div>
   </article>`;
 }
-function renderSlot(teamName, src){
-  if(teamName){ const t=findTeam(teamName); return `<div class="flow-team"><span>${esc(t.flag)}</span><b>${esc(t.name)}</b></div>`; }
-  return `<div class="flow-team pending"><span>·</span><b>${esc(sourceLabel(src))}</b></div>`;
+
+function renderTeamSlot(teamName, source){
+  if(teamName){
+    const t = findTeam(teamName);
+    return `<div class="wc-team-slot"><span>${esc(t.flag)}</span><strong>${esc(t.name)}</strong></div>`;
+  }
+  return `<div class="wc-team-slot pending"><span>•</span><strong>${esc(sourceLabel(source))}</strong></div>`;
 }
-function renderChampionHub(){
-  const champ = worldState.champion ? findTeam(worldState.champion) : null;
-  return `<section class="champion-hub"><div class="trophy-orb">🏆</div><small>CAMPEÓN</small><strong>${champ ? esc(teamLabel(champ)) : 'Por definir'}</strong><span>Premium World Cup</span></section>`;
+
+function renderChampionBlock(){
+  const box = $('[data-champion-block]');
+  if(!box) return;
+  const finalTeams = matchTeams(KNOCKOUT_FIXTURES.final[0]);
+  const locked = !roundComplete('final');
+  const champion = worldState.champion ? findTeam(worldState.champion) : null;
+  box.innerHTML = `<details class="wc-accordion wc-stage-card wc-champion-block ${worldState.champion ? 'is-complete' : ''} ${locked ? 'is-locked' : ''}" ${!locked && !worldState.champion ? 'open' : ''}>
+    <summary class="wc-accordion-summary">
+      <span><small>Trofeo</small><strong>Campeón del mundo</strong><em>${champion ? teamLabel(champion) : locked ? 'Completa la final' : 'Elige tu campeón'}</em></span>
+      <b>${worldState.champion ? 'Completo' : locked ? 'Bloqueado' : 'Pendiente'}</b>
+    </summary>
+    <div class="wc-stage-body wc-champion-body">
+      <div class="wc-trophy-card"><div class="trophy-orb">🏆</div><p>Tu campeón</p><strong>${champion ? esc(teamLabel(champion)) : 'Por definir'}</strong></div>
+      <label class="field"><span>Selecciona campeón</span><select data-champion-select ${locked ? 'disabled' : ''}>${optionList(finalTeams, locked ? 'Bloqueado' : 'Selecciona campeón', worldState.champion)}</select></label>
+    </div>
+  </details>`;
+  $('[data-champion-select]', box)?.addEventListener('change', e => {
+    worldState.champion = e.currentTarget.value;
+    if(worldState.champion) worldState.winners.final_1 = worldState.champion;
+    renderAll();
+  });
 }
-function renderProHub(){ return `<section class="champion-hub pro"><div class="trophy-orb">⚽</div><small>META PRO</small><strong>Cuartos definidos</strong><span>Jugada hasta cuartos</span></section>`; }
 
 function sourceTeam(source){
   if(source.type === 'group') return groupPick(source.group, source.pos);
@@ -280,92 +332,117 @@ function sourceLabel(source){
   if(source.type === 'winner') return `Ganador ${source.match.toUpperCase().replace('_',' ')}`;
   return 'Pendiente';
 }
+
+function sanitizeBestThirds(){
+  const valid = new Set(thirdPool().map(t => t.name));
+  worldState.bestThirds = worldState.bestThirds.map(t => valid.has(t) ? t : '');
+  const seen = new Set();
+  worldState.bestThirds = worldState.bestThirds.map(t => {
+    if(!t) return '';
+    if(seen.has(t)) return '';
+    seen.add(t);
+    return t;
+  });
+}
 function trimInvalidWinners(){
+  sanitizeBestThirds();
   let changed = true;
-  const allMatches = Object.values(KNOCKOUT_FIXTURES).flat();
+  const allMatches = ROUNDS.flatMap(r => KNOCKOUT_FIXTURES[r.key] || []);
   while(changed){
     changed = false;
     allMatches.forEach(match => {
-      const valid = matchTeams(match).map(t => t.name);
-      if(worldState.winners[match.id] && !valid.includes(worldState.winners[match.id])){ worldState.winners[match.id]=''; changed = true; }
+      const teams = matchTeams(match).map(t => t.name);
+      if(worldState.winners[match.id] && !teams.includes(worldState.winners[match.id])){
+        worldState.winners[match.id] = '';
+        changed = true;
+      }
     });
   }
-  const finalValid = matchTeams(KNOCKOUT_FIXTURES.final[0]).map(t=>t.name);
-  if(worldState.champion && !finalValid.includes(worldState.champion)) worldState.champion='';
+  const finalTeams = matchTeams(KNOCKOUT_FIXTURES.final[0]).map(t => t.name);
+  if(worldState.champion && !finalTeams.includes(worldState.champion)) worldState.champion = worldState.winners.final_1 || '';
 }
-function renderChampion(){
-  const section = $('[data-champion-section]'); if(!section) return;
-  section.hidden = worldState.mode !== 'premium';
-  if(worldState.mode !== 'premium') return;
-  const sel = $('[data-champion-select]');
-  const finalTeams = matchTeams(KNOCKOUT_FIXTURES.final[0]);
-  sel.innerHTML = optionList(finalTeams, finalTeams.length ? 'Selecciona campeón' : 'Primero completa la final', worldState.champion);
-  sel.disabled = finalTeams.length < 2;
-  sel.onchange = e => { worldState.champion = e.target.value; updateSummary(); renderBracket(); };
+
+function renderProgress(){
+  const progress = $('[data-progress-rail]');
+  if(progress){
+    const stages = [
+      { label:'Grupos', done:groupsComplete(), current:!groupsComplete(), value:`${completedGroups()}/12` },
+      { label:'Terceros', done:bestThirdsComplete(), current:groupsComplete() && !bestThirdsComplete(), value:`${bestThirdsCount()}/8` },
+      ...ROUNDS.map(r => ({ label:r.short, done:roundComplete(r.key), current:previousRoundsComplete(r.key) && !roundComplete(r.key), value:`${roundCount(r.key)}/${(KNOCKOUT_FIXTURES[r.key] || []).length}` })),
+      { label:'Campeón', done:!!worldState.champion, current:roundComplete('final') && !worldState.champion, value:worldState.champion ? '1/1' : '0/1' }
+    ];
+    progress.innerHTML = stages.map(s => `<span class="${s.done?'done':s.current?'current':''}"><b>${esc(s.label)}</b><em>${esc(s.value)}</em></span>`).join('');
+  }
+  const bar = $('[data-progress-bar]');
+  if(bar) bar.style.width = Math.min(100, Math.round(totalSelections() / requiredSelections() * 100)) + '%';
 }
+
 function updateSummary(){
-  const filled = totalSelections(), required = requiredSelections();
-  $('[data-world-count]').textContent = `${filled}/${required}`;
-  const btn = $('[data-confirm-world]');
-  if(btn){ btn.textContent = allRequiredComplete() ? 'Confirmar jugada' : 'Completa tu pronóstico'; }
+  const percent = Math.min(100, Math.round(totalSelections() / requiredSelections() * 100));
+  $('[data-world-count]') && ($('[data-world-count]').textContent = `${totalSelections()}/${requiredSelections()}`);
+  $('[data-groups-count]') && ($('[data-groups-count]').textContent = `${completedGroups()}/12`);
+  $('[data-thirds-count]') && ($('[data-thirds-count]').textContent = `${bestThirdsCount()}/8`);
+  $('[data-rounds-count]') && ($('[data-rounds-count]').textContent = `${ROUNDS.reduce((sum, r) => sum + roundCount(r.key), 0)}/31`);
+  $('[data-champion-name]') && ($('[data-champion-name]').textContent = worldState.champion ? teamLabel(findTeam(worldState.champion)) : 'Por definir');
+  $('[data-progress-percent]') && ($('[data-progress-percent]').textContent = percent + '%');
+  $('[data-summary-price]') && ($('[data-summary-price]').textContent = money(WORLD_PREMIUM.price));
 }
 
 function openConfirmBridge(){
-  if(!allRequiredComplete()){ alert('Completa todas las selecciones requeridas para esta modalidad antes de confirmar.'); return; }
-  const mode = WORLD_MODES[worldState.mode || 'express'];
+  if(!allRequiredComplete()){
+    alert('Aún faltan selecciones para completar tu Worldgroup Premium. Revisa los bloques pendientes.');
+    return;
+  }
   const modal = $('[data-world-modal]');
+  if(!modal) return;
   const isLogged = PL.isLoggedIn();
   $('[data-modal-login]').hidden = isLogged;
   $('[data-modal-payment]').hidden = !isLogged;
-  $('[data-payment-mode]').textContent = mode.name;
-  $('[data-payment-total]').textContent = money(mode.price);
-  const ticketBox = $('[data-payment-ticket]');
-  if(ticketBox) ticketBox.innerHTML = renderTicketPreview();
+  $('[data-payment-mode]').textContent = WORLD_PREMIUM.name;
+  $('[data-payment-total]').textContent = money(WORLD_PREMIUM.price);
+  $('[data-payment-ticket]').innerHTML = renderTicketPreview();
   modal.hidden = false;
 }
 function closeWorldModal(){ const modal = $('[data-world-modal]'); if(modal) modal.hidden = true; }
 function renderTicketPreview(){
-  const mode = WORLD_MODES[worldState.mode || 'express'];
-  const groupsDone = Object.keys(worldState.groupPicks).filter(groupIsComplete).length;
-  const winnersDone = Object.values(worldState.winners).filter(Boolean).length;
   return `<div class="ticket-mini">
-    <div><span>Juego</span><strong>Premium World Cup</strong></div>
-    <div><span>Modalidad</span><strong>${esc(mode.name)}</strong></div>
-    <div><span>Grupos</span><strong>${groupsDone}/12</strong></div>
-    <div><span>Mejores terceros</span><strong>${worldState.bestThirds.filter(Boolean).length}/8</strong></div>
-    <div><span>Llaves</span><strong>${winnersDone}</strong></div>
-    <div><span>Campeón</span><strong>${esc(worldState.champion || 'No aplica')}</strong></div>
+    <div><span>Juego</span><strong>${esc(WORLD_PREMIUM.game)}</strong></div>
+    <div><span>Modalidad</span><strong>${esc(WORLD_PREMIUM.name)}</strong></div>
+    <div><span>Grupos</span><strong>${completedGroups()}/12</strong></div>
+    <div><span>Mejores terceros</span><strong>${bestThirdsCount()}/8</strong></div>
+    <div><span>Llaves</span><strong>${ROUNDS.reduce((sum, r) => sum + roundCount(r.key), 0)}/31</strong></div>
+    <div><span>Campeón</span><strong>${esc(worldState.champion ? teamLabel(findTeam(worldState.champion)) : 'Por definir')}</strong></div>
   </div>`;
 }
 function collectTicketData(code){
-  const mode = WORLD_MODES[worldState.mode || 'express'];
   return {
     code,
-    game:'Premium World Cup',
-    mode:mode.name,
-    price:mode.price,
-    amount:money(mode.price),
-    status:'Registrado',
-    prize:'Pozo mayor',
-    selections:{ groups:worldState.groupPicks, bestThirds:worldState.bestThirds, winners:worldState.winners, champion:worldState.champion }
+    game: WORLD_PREMIUM.game,
+    mode: WORLD_PREMIUM.name,
+    price: WORLD_PREMIUM.price,
+    amount: money(WORLD_PREMIUM.price),
+    status: 'Registrado',
+    prize: WORLD_PREMIUM.prize,
+    selections: draft()
   };
 }
 function completePaymentFlow(){
-  const mode = WORLD_MODES[worldState.mode || 'express'];
-  if(!PL.isLoggedIn()){ openConfirmBridge(); return; }
-  if(!PL.canPay(mode.price)){ alert('Saldo insuficiente. Recarga tu cuenta antes de comprar este ticket.'); location.href='../saldo.html'; return; }
-  const code = PL.makeCode('PWC');
-  const result = PL.addTicket(collectTicketData(code), mode.price);
-  if(!result.ok){ alert(result.reason || 'No se pudo registrar el ticket.'); return; }
-  const modalPayment = $('[data-modal-payment]');
-  if(modalPayment){
-    modalPayment.innerHTML = `<p class="eyebrow">Ticket generado</p>
-      <h2>Jugada registrada</h2>
-      <div class="ticket-code">${esc(code)}</div>
-      ${renderTicketPreview()}
-      <p class="muted">El ticket fue guardado en Mis jugadas y el saldo fue descontado correctamente.</p>
-      <div class="modal-actions"><a class="btn btn-primary" href="../mis-jugadas.html">Ver mis jugadas</a><button class="btn btn-outline" type="button" data-close-world-modal>Volver</button></div>`;
-    modalPayment.querySelector('[data-close-world-modal]')?.addEventListener('click', closeWorldModal);
+  if(!PL.canPay(WORLD_PREMIUM.price)){
+    alert('Saldo insuficiente. Recarga tu saldo para registrar esta jugada.');
+    location.href = '../saldo.html';
+    return;
   }
+  const code = PL.makeCode('PWC');
+  const result = PL.addTicket(collectTicketData(code), WORLD_PREMIUM.price);
+  if(!result.ok){ alert(result.reason || 'No se pudo registrar el ticket.'); return; }
+  localStorage.removeItem(DRAFT_KEY);
+  const modalPayment = $('[data-modal-payment]');
+  modalPayment.innerHTML = `<p class="eyebrow">Ticket registrado</p>
+    <h2>Tu Worldgroup Premium está listo</h2>
+    <div class="ticket-code">${esc(result.ticket.code)}</div>
+    ${renderTicketPreview()}
+    <p class="muted">Tu ticket fue guardado en Mis jugadas y el saldo fue descontado correctamente.</p>
+    <div class="modal-actions"><a class="btn btn-primary" href="../mis-jugadas.html">Ver mis jugadas</a><a class="btn btn-outline" href="mundial.html">Crear otro fixture</a></div>`;
 }
+
 document.addEventListener('DOMContentLoaded', initMundial);
