@@ -35,3 +35,9 @@ Esta versión sigue siendo un prototipo frontend. Para producción real se neces
 - El fixture ahora se organiza en bloques verticales desplegables: grupos, mejores terceros, ronda de 32, octavos, cuartos, semifinales, final y campeón.
 - La experiencia fue optimizada para mobile-first con cards compactas, resumen sticky y progreso visual.
 - Express y Pro quedan como modalidades futuras, no visibles en la interfaz actual.
+
+
+## V3.1 — Ajustes UX móvil
+
+- Los grupos desplegables ya no se cierran al seleccionar el primer país; permanecen abiertos mientras estén incompletos.
+- Se reemplazaron las letras del footer por íconos SVG reales para Facebook, Instagram, TikTok y YouTube.

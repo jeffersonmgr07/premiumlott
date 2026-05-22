@@ -160,10 +160,16 @@ function renderAll(){
 function renderGroups(){
   const container = $('[data-world-groups]');
   if(!container) return;
+  const openGroups = new Set(
+    $$('[data-group-card]', container)
+      .filter(card => card.open)
+      .map(card => card.dataset.groupCard)
+  );
   container.innerHTML = worldState.groups.map((group, idx) => {
     const complete = groupIsComplete(group.group);
     const picks = worldState.groupPicks[group.group] || {};
-    const open = !complete && idx < 2 ? 'open' : '';
+    const shouldStayOpen = openGroups.has(group.group) && !complete;
+    const open = shouldStayOpen || (!complete && idx < 2 && openGroups.size === 0) ? 'open' : '';
     const summary = complete ? `${esc(picks.first)} · ${esc(picks.second)} · ${esc(picks.third)}` : 'Selecciona 1.º, 2.º y 3.º';
     return `<details class="wc-accordion wc-group-card ${complete ? 'is-complete' : 'is-pending'}" ${open} data-group-card="${esc(group.group)}">
       <summary class="wc-accordion-summary">
