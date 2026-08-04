@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Crear grupo · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
+<div class="demo-banner" data-demo-banner></div>
+<header data-site-header></header>
+<main class="main"><section class="section"><div class="grid" style="max-width:640px;margin:0 auto"><article class="card">
+  <p class="eyebrow">Nuevo grupo</p><h1>Crea tu grupo privado</h1><p class="muted">Define nombre, capacidad y modalidad de premiación. Podrás invitar miembros luego con un código o enlace.</p>
+  <form class="form" data-create-group-form novalidate>
+    <div class="field"><label for="name">Nombre del grupo</label><input id="name" name="name" required maxlength="60"><span class="field-error" data-error-for="name"></span></div>
+    <div class="field"><label for="description">Descripción (opcional)</label><input id="description" name="description" maxlength="140"></div>
+    <div class="field"><label>Capacidad máxima (2-50 miembros)</label>
+      <div class="capacity-quick" data-capacity-options>
+        <button type="button" data-cap="5">5</button><button type="button" data-cap="10">10</button>
+        <button type="button" data-cap="20">20</button><button type="button" data-cap="50">50</button>
+      </div>
+      <input type="number" name="capacity" min="2" max="50" value="10" data-capacity-input style="margin-top:.5rem">
+      <span class="field-error" data-error-for="capacity"></span>
+    </div>
+    <div class="field"><label>Modalidad de premiación</label>
+      <div class="mode-options" data-mode-options>
+        <label class="mode-option" data-mode="HIGHEST_SCORE"><input type="radio" name="prizeMode" value="HIGHEST_SCORE" style="display:none"><strong>Mayor cantidad de aciertos</strong><small>El pozo del programa se reparte entre quienes logren el mayor puntaje. Sin acumulación.</small></label>
+        <label class="mode-option" data-mode="PERFECT_12"><input type="radio" name="prizeMode" value="PERFECT_12" style="display:none"><strong>12 aciertos o pozo acumulado</strong><small>Solo ganan los tickets con 12/12. Si nadie acierta todo, el pozo se acumula para el siguiente programa.</small></label>
+        <label class="mode-option" data-mode="MIXED"><input type="radio" name="prizeMode" value="MIXED" style="display:none"><strong>Mixta</strong><small>La mitad del pozo premia el mayor puntaje semanal y la otra mitad se acumula hasta que alguien logre 12/12.</small></label>
+      </div>
+      <span class="field-error" data-error-for="prizeMode"></span>
+    </div>
+    <label class="mini"><input type="checkbox" name="rulesAccepted" required> Acepto las reglas del grupo y entiendo que la modalidad no podrá cambiarse luego de la primera compra de tickets.</label>
+    <button class="btn btn-primary" type="submit" data-submit-btn>Crear grupo</button>
+  </form>
+</article></div></section></main>
+<footer data-site-footer></footer>
+</div>
+<script src="../assets/js/core/store.js"></script>
+<script src="../assets/js/core/settlement.js"></script>
+<script src="../assets/js/core/formatters.js"></script>
+<script src="../assets/js/core/router-utils.js"></script>
+<script src="../assets/js/core/ui.js"></script>
+<script src="../assets/js/core/layout.js"></script>
+<script src="../assets/js/services/mock-api.js"></script>
+<script src="../assets/js/services/api-client.js"></script>
+<script src="../assets/js/services/auth-service.js"></script>
+<script src="../assets/js/services/wallet-service.js"></script>
+<script src="../assets/js/services/group-service.js"></script>
+<script src="../assets/js/services/premiumgol-service.js"></script>
+<script src="../assets/js/services/admin-service.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/pages/group-create.js"></script>
+</body></html>

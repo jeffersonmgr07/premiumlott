@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Detalle del grupo · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
+<div class="demo-banner" data-demo-banner></div>
+<header data-site-header></header>
+<main class="main"><section class="section" data-loading><p class="muted">Cargando grupo…</p></section>
+<section class="section" data-content hidden>
+<div class="section-head"><div class="group-card-head"><div class="group-avatar" data-avatar></div><div><p class="eyebrow" data-mode-label></p><h1 class="title" data-name></h1></div></div>
+<div class="section-actions"><a class="btn btn-primary" data-play-link href="#">Jugar PremiumGol</a></div></div>
+<p class="lead" data-description></p>
+
+<div class="grid grid-3">
+  <div class="card compact"><span class="muted">Miembros</span><h2 data-member-count>—</h2></div>
+  <div class="card compact"><span class="muted">Pozo del programa abierto</span><h2 data-pool-open>—</h2></div>
+  <div class="card compact"><span class="muted">Pozo acumulado (progresivo)</span><h2 data-pool-progressive>—</h2></div>
+</div>
+
+<div class="grid grid-2" style="margin-top:1rem;align-items:start">
+  <article class="card">
+    <h3>Miembros</h3>
+    <div data-members-list></div>
+  </article>
+  <article class="card" data-owner-panel hidden>
+    <h3>Invitaciones</h3>
+    <p class="mini">Comparte el código o enlace para sumar miembros.</p>
+    <div class="code-display" data-group-code>——————</div>
+    <div class="cart-line-actions" style="margin-bottom:.8rem"><button type="button" data-copy-code>Copiar código</button><button type="button" data-copy-link>Copiar enlace</button><button type="button" data-new-invite>Generar nueva invitación</button></div>
+    <label class="mini"><input type="checkbox" data-lock-join> Cerrar temporalmente el ingreso de nuevos miembros</label>
+    <div data-invitations-list style="margin-top:.8rem"></div>
+  </article>
+</div>
+
+<a class="btn btn-outline" style="margin-top:1.2rem" data-leaderboard-link href="#">Ver clasificación del programa actual</a>
+</section></main>
+<footer data-site-footer></footer>
+</div>
+<script src="../assets/js/core/store.js"></script>
+<script src="../assets/js/core/settlement.js"></script>
+<script src="../assets/js/core/formatters.js"></script>
+<script src="../assets/js/core/router-utils.js"></script>
+<script src="../assets/js/core/ui.js"></script>
+<script src="../assets/js/core/layout.js"></script>
+<script src="../assets/js/services/mock-api.js"></script>
+<script src="../assets/js/services/api-client.js"></script>
+<script src="../assets/js/services/auth-service.js"></script>
+<script src="../assets/js/services/wallet-service.js"></script>
+<script src="../assets/js/services/group-service.js"></script>
+<script src="../assets/js/services/premiumgol-service.js"></script>
+<script src="../assets/js/services/admin-service.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/pages/group-detail.js"></script>
+</body></html>

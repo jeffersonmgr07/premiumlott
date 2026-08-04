@@ -104,3 +104,135 @@ a{color:inherit;text-decoration:none}.page-wrapper{max-width:1200px;margin:0 aut
 
 /* V3.1 footer social icons */
 .social-icons a svg{width:17px;height:17px;fill:currentColor;display:block}.social-icons a[aria-label="Instagram"] svg{width:18px;height:18px}.social-icons a[aria-label="YouTube"] svg{width:19px;height:19px}
+
+/* ============================================================
+   FASE 1 — PremiumGol / grupos / billetera / admin
+   ============================================================ */
+
+/* Aviso de modo de prueba, visible en todas las páginas */
+.demo-banner{display:flex;align-items:center;gap:.5rem;justify-content:center;text-align:center;font-size:.74rem;font-weight:700;letter-spacing:.02em;color:#151000;background:linear-gradient(90deg,var(--yellow),var(--gold));border-radius:14px;padding:.5rem .9rem;margin-bottom:.8rem}
+.demo-banner-dot{width:7px;height:7px;border-radius:50%;background:#151000;flex:0 0 auto}
+
+/* Toasts (reemplazan alert()) */
+.toast-host{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:.5rem;width:min(92vw,420px);pointer-events:none}
+.toast{pointer-events:auto;background:rgba(10,10,10,.94);border:1px solid var(--line);color:#fff;border-radius:16px;padding:.75rem 1rem;font-size:.86rem;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;transform:translateY(8px);transition:.22s ease}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast-success{border-color:rgba(255,197,43,.5)}
+.toast-error{border-color:rgba(255,60,60,.55);color:#ffdada}
+.toast-info{border-color:rgba(255,255,255,.22)}
+
+/* Formularios: errores por campo, OTP */
+.field-error{display:block;min-height:1.1em;color:#ff8a8a;font-size:.76rem}
+.otp-demo-code{font-size:1.9rem;font-weight:900;letter-spacing:.35em;color:var(--yellow);text-align:center;margin:.5rem 0}
+
+/* Skeletons */
+.skeleton-card{display:grid;gap:.5rem}
+.skeleton-bar{display:block;height:14px;border-radius:8px;width:100%;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));background-size:200% 100%;animation:skeleton-sweep 1.3s ease-in-out infinite}
+.skeleton-row td{padding:1rem}
+@keyframes skeleton-sweep{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Footer extra links */
+.site-footer{flex-wrap:wrap}
+.footer-links{display:flex;gap:.9rem;font-size:.8rem}
+.footer-links a{color:#cfcfcf}
+.footer-links a:hover{color:var(--yellow)}
+
+/* Estados de programa / tickets / invitaciones */
+.status.pending{background:rgba(255,255,255,.10);color:#ddd}
+.status.warn{background:rgba(255,166,0,.15);color:#ffb54a}
+.status.danger{background:rgba(255,60,60,.15);color:#ff8a8a}
+.status.info{background:rgba(120,180,255,.15);color:#8fbcff}
+
+/* Grupos */
+.group-card{display:flex;flex-direction:column;gap:.5rem}
+.group-avatar{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:900;color:#151000;background:linear-gradient(135deg,var(--yellow),var(--orange));font-size:.85rem}
+.group-card-head{display:flex;gap:.7rem;align-items:center}
+.capacity-quick{display:flex;gap:.5rem;flex-wrap:wrap}
+.capacity-quick button{border:1px solid var(--line);background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:.4rem .85rem;font-size:.8rem;cursor:pointer;font-weight:700}
+.capacity-quick button.active,.capacity-quick button:hover{border-color:rgba(255,197,43,.6);color:var(--yellow);background:rgba(255,197,43,.10)}
+.mode-options{display:grid;gap:.6rem}
+.mode-option{border:1px solid var(--line);border-radius:18px;padding:.85rem;cursor:pointer;display:grid;gap:.25rem;background:rgba(0,0,0,.28)}
+.mode-option strong{color:#fff;font-size:.92rem}
+.mode-option small{color:#bbb;line-height:1.5}
+.mode-option.active{border-color:rgba(255,197,43,.6);background:rgba(255,197,43,.08)}
+.mode-option.active strong{color:var(--yellow)}
+.code-display{font-size:1.5rem;font-weight:900;letter-spacing:.25em;color:var(--yellow);text-align:center;padding:.8rem;border:1px dashed rgba(255,197,43,.4);border-radius:16px;margin:.6rem 0}
+.member-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--line);gap:.6rem}
+.member-row:last-child{border-bottom:0}
+.owner-tag{color:var(--yellow);font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+
+/* Constructor de 12 partidos */
+.pick-grid{display:grid;gap:.7rem}
+.match-card{border:1px solid var(--line);border-radius:20px;padding:.85rem 1rem;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.25));display:grid;gap:.55rem}
+.match-card.is-complete{border-color:rgba(255,197,43,.4)}
+.match-card-head{display:flex;justify-content:space-between;gap:.6rem;align-items:baseline}
+.match-number{color:var(--yellow);font-weight:900;font-size:.75rem}
+.match-teams{font-weight:700;font-size:.95rem}
+.match-meta{color:#aaa;font-size:.74rem}
+.pick-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.pick-btn{border:1px solid var(--line);background:rgba(0,0,0,.4);color:#fff;border-radius:14px;padding:.75rem .5rem;font-weight:800;cursor:pointer;font-size:.85rem;transition:.15s ease}
+.pick-btn:hover{border-color:rgba(255,197,43,.5)}
+.pick-btn.active{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#151000;border-color:transparent;box-shadow:0 8px 20px rgba(255,197,43,.25)}
+.pick-btn:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.builder-toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.picks-progress{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.picks-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--orange));transition:width .2s ease}
+
+/* Carrito de jugadas */
+.cart-line{border:1px solid var(--line);border-radius:16px;padding:.7rem .85rem;display:flex;justify-content:space-between;align-items:center;gap:.6rem;background:rgba(0,0,0,.25)}
+.cart-line-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+.cart-line-actions button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:999px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer}
+.cart-line-actions button:hover{border-color:rgba(255,197,43,.5);color:var(--yellow)}
+.cart-summary-row{display:flex;justify-content:space-between;padding:.4rem 0;font-size:.86rem;color:#ddd}
+.cart-summary-row strong{color:var(--yellow)}
+.sticky-summary{position:sticky;top:92px}
+.mobile-cart-bar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;padding:.7rem 1rem;background:rgba(5,5,5,.96);border-top:1px solid var(--line);backdrop-filter:blur(10px);align-items:center;justify-content:space-between;gap:.8rem}
+.mobile-cart-bar strong{color:var(--yellow)}
+
+/* Clasificación / leaderboard */
+.leaderboard-row td{vertical-align:middle}
+.leaderboard-position{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;background:rgba(255,255,255,.08);font-weight:800;font-size:.78rem}
+.leaderboard-position.top{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#151000}
+
+/* Panel administrativo */
+.admin-shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:1.2rem;align-items:start}
+.admin-nav{display:grid;gap:.35rem;position:sticky;top:92px}
+.admin-nav a{padding:.65rem .85rem;border-radius:14px;color:#ddd;font-size:.88rem;border:1px solid transparent}
+.admin-nav a.active,.admin-nav a:hover{background:rgba(255,197,43,.10);color:var(--yellow);border-color:rgba(255,197,43,.25)}
+.admin-stat{display:grid;gap:.25rem}
+.admin-stat strong{font-size:1.6rem;color:var(--yellow)}
+.match-result-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;border:1px solid var(--line);border-radius:16px;padding:.65rem .85rem}
+.result-btn-row{display:flex;gap:.4rem}
+.result-btn-row button{border:1px solid var(--line);background:rgba(0,0,0,.4);color:#fff;border-radius:12px;padding:.45rem .7rem;font-weight:800;font-size:.78rem;cursor:pointer}
+.result-btn-row button.active{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#151000;border-color:transparent}
+
+/* Wizard / pasos */
+.wizard-steps{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.wizard-steps span{border:1px solid var(--line);border-radius:999px;padding:.35rem .75rem;font-size:.74rem;color:#aaa}
+.wizard-steps span.active{border-color:rgba(255,197,43,.55);color:var(--yellow);background:rgba(255,197,43,.08)}
+
+/* Estado vacío genérico */
+.empty-state{text-align:center;padding:2.4rem 1rem;display:grid;gap:.6rem;justify-items:center}
+.empty-state .pill{margin-bottom:.2rem}
+
+@media (max-width:900px){
+  .admin-shell{grid-template-columns:1fr}
+  .admin-nav{position:relative;top:auto;grid-auto-flow:column;overflow-x:auto}
+  .sticky-summary{position:relative;top:auto}
+}
+@media (max-width:640px){
+  .pick-row{grid-template-columns:repeat(3,1fr)}
+  .mobile-cart-bar{display:flex}
+  .desktop-only-summary{display:none}
+  .cart-line{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:360px){
+  .otp-demo-code{font-size:1.5rem;letter-spacing:.2em}
+  .code-display{font-size:1.2rem;letter-spacing:.15em}
+}
+@media (max-width:480px){
+  .site-header{flex-wrap:wrap;row-gap:.6rem}
+  .header-actions{flex:1 0 100%;justify-content:flex-end}
+  .brand img{height:40px}
+  .mobile-cart-bar strong{font-size:.92rem}
+}

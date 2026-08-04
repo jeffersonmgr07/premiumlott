@@ -1,69 +1,26 @@
 {
+  "_readme": "Referencia del esquema de programa PremiumGol v3 (12 partidos). El prototipo genera y persiste sus propios datos de demostración en localStorage a través de assets/js/core/store.js; este archivo se conserva como documentación del formato esperado y como insumo de referencia para la futura carga en Google Sheets / Apps Script.",
   "programs": [
     {
-      "id": "PG-2026-W22-A",
-      "title": "PremiumGol Semana 22 · Programa A",
-      "ticketPrice": 5,
-      "ticketPriceLabel": "S/ 5.00",
-      "jackpotLabel": "Pozo S/ 48,500",
-      "closeDate": "2026-05-23 18:00",
+      "code": "PG-2026-W22-A",
+      "name": "PremiumGol · Programa semanal",
+      "status": "open",
+      "timezone": "America/Lima",
+      "ticketPriceCents": 500,
+      "voidPolicy": "VOID_COUNTS_AS_HIT",
       "matches": [
-        {
-          "id": "M1",
-          "home": "Perú",
-          "away": "Chile",
-          "date": "Sáb 23 May · 19:00",
-          "league": "Internacional"
-        },
-        {
-          "id": "M2",
-          "home": "Argentina",
-          "away": "Uruguay",
-          "date": "Sáb 23 May · 20:30",
-          "league": "Internacional"
-        },
-        {
-          "id": "M3",
-          "home": "Brasil",
-          "away": "Colombia",
-          "date": "Dom 24 May · 17:00",
-          "league": "Internacional"
-        },
-        {
-          "id": "M4",
-          "home": "España",
-          "away": "Portugal",
-          "date": "Dom 24 May · 14:00",
-          "league": "Europa"
-        },
-        {
-          "id": "M5",
-          "home": "Italia",
-          "away": "Francia",
-          "date": "Dom 24 May · 16:00",
-          "league": "Europa"
-        },
-        {
-          "id": "M6",
-          "home": "Alemania",
-          "away": "Países Bajos",
-          "date": "Dom 24 May · 18:00",
-          "league": "Europa"
-        },
-        {
-          "id": "M7",
-          "home": "México",
-          "away": "Estados Unidos",
-          "date": "Lun 25 May · 20:00",
-          "league": "Concacaf"
-        },
-        {
-          "id": "M8",
-          "home": "Japón",
-          "away": "Corea del Sur",
-          "date": "Lun 25 May · 07:00",
-          "league": "Asia"
-        }
+        { "number": 1, "competition": "Liga 1 Perú", "home": "Universitario", "away": "Alianza Lima" },
+        { "number": 2, "competition": "Liga 1 Perú", "home": "Sporting Cristal", "away": "Melgar" },
+        { "number": 3, "competition": "LaLiga", "home": "Real Madrid", "away": "Barcelona" },
+        { "number": 4, "competition": "LaLiga", "home": "Atlético Madrid", "away": "Sevilla" },
+        { "number": 5, "competition": "Premier League", "home": "Manchester City", "away": "Liverpool" },
+        { "number": 6, "competition": "Premier League", "home": "Arsenal", "away": "Chelsea" },
+        { "number": 7, "competition": "Serie A", "home": "Inter de Milán", "away": "Juventus" },
+        { "number": 8, "competition": "Serie A", "home": "AC Milan", "away": "Napoli" },
+        { "number": 9, "competition": "Bundesliga", "home": "Bayern Múnich", "away": "Borussia Dortmund" },
+        { "number": 10, "competition": "Bundesliga", "home": "RB Leipzig", "away": "Bayer Leverkusen" },
+        { "number": 11, "competition": "Ligue 1", "home": "PSG", "away": "Marsella" },
+        { "number": 12, "competition": "Brasileirão", "home": "Flamengo", "away": "Palmeiras" }
       ]
     }
   ]
