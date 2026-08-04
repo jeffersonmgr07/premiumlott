@@ -4,8 +4,20 @@
 <main class="main" data-loading><p class="muted">Cargando programa…</p></main>
 <main class="main" data-content hidden>
 <section class="section" style="padding-top:1.2rem">
-<div class="section-head"><div><p class="eyebrow" data-group-name>Grupo</p><h1 class="title" data-program-title>Programa</h1><p class="lead">Marca Local, Empate o Visitante en los 12 partidos. Puedes registrar varias jugadas en un mismo ticket.</p></div>
-<div class="card compact" style="text-align:center"><span class="muted">Cierra en</span><h2 data-countdown>—</h2></div></div>
+<div class="section-head">
+  <div><p class="eyebrow" data-program-name>PremiumGol</p><h1 class="title">Arma tu jugada</h1><p class="lead">Marca Local, Empate o Visitante en los 12 partidos. <a href="../pages/legales/reglas-premiumgol.html" target="_blank">Ver reglas</a></p></div>
+  <div class="card compact" style="text-align:center;min-width:150px"><span class="muted">Cierra en</span><h2 data-countdown>—</h2></div>
+</div>
+
+<div class="card compact" data-group-picker style="margin-bottom:1rem">
+  <div class="group-picker-row">
+    <div class="field" style="margin:0"><label for="group-select">Grupo</label>
+      <select id="group-select" data-group-select><option value="">Selecciona un grupo…</option></select>
+    </div>
+    <div class="group-picker-actions" data-group-picker-actions></div>
+  </div>
+  <p class="mini muted" data-group-hint>Puedes armar tus pronósticos primero y elegir el grupo antes de confirmar.</p>
+</div>
 
 <div class="grid grid-3">
   <div class="card compact"><span class="muted">Pozo del grupo</span><h2 data-pool-label>—</h2></div>
