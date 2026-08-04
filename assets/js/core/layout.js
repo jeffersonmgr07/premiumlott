@@ -13,7 +13,7 @@
   function renderDemoBanner() {
     var el = document.querySelector('[data-demo-banner]');
     if (!el) return;
-    el.innerHTML = '<span class="demo-banner-dot" aria-hidden="true"></span> MODO DE PRUEBA — El saldo, las jugadas y los premios son ficticios. No se procesan depósitos, retiros ni premios reales.';
+    el.innerHTML = '<span class="demo-banner-dot" aria-hidden="true"></span><span><strong>Modo de prueba</strong> — saldo, jugadas y premios ficticios. Sin depósitos, retiros ni pagos reales.</span>';
   }
 
   function renderHeader() {
@@ -29,7 +29,6 @@
       '<a href="' + p + 'index.html#juegos" data-i18n="nav.games">Juegos</a>' +
       '<a href="' + p + 'grupos/index.html">Mis grupos</a>' +
       '<a href="' + p + 'transparencia.html">Transparencia</a>' +
-      '<a class="nav-cta" href="' + p + 'juegos/mundial.html">Worldgroup Premium</a>' +
       '</nav>' +
       '<div class="header-actions">' +
       '<select class="lang-select" data-lang-select><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option><option value="fr">FR</option><option value="de">DE</option><option value="it">IT</option><option value="zh">中文</option><option value="ja">日本語</option></select>' +

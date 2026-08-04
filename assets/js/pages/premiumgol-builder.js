@@ -1,10 +1,10 @@
 (function () {
-  var groupId, programId, program, group, currentPicks = {}, editingLocalId = null, countdownTimer = null;
+  var program, group, currentUser, groupId = null, currentPicks = {}, editingLocalId = null, countdownTimer = null;
 
   var MODE_DESCRIPTIONS = {
-    HIGHEST_SCORE: 'Todo el pozo del programa se reparte entre los tickets con más aciertos. Sin acumulación.',
-    PERFECT_12: 'Solo ganan los tickets con 12/12. Si nadie acierta, el pozo se acumula para el siguiente programa.',
-    MIXED: '50% del pozo premia el mayor puntaje semanal y 50% se acumula hasta que alguien logre 12/12.'
+    HIGHEST_SCORE: 'Todo el pozo se reparte entre los tickets con más aciertos. Sin acumulación.',
+    PERFECT_12: 'Solo ganan los tickets con 12/12. Si nadie acierta, el pozo se acumula.',
+    MIXED: '50% premia el mayor puntaje semanal y 50% se acumula hasta un 12/12.'
   };
 
   function renderMatches() {
@@ -40,9 +40,11 @@
   }
 
   async function renderCart() {
-    var cart = PremiumGolService.getCart(groupId, programId);
+    var cart = groupId ? PremiumGolService.getCart(groupId, program.id) : [];
     var host = document.querySelector('[data-cart-list]');
-    if (!cart.length) {
+    if (!groupId) {
+      host.innerHTML = '<p class="muted mini">Elige un grupo para empezar tu carrito.</p>';
+    } else if (!cart.length) {
       host.innerHTML = '<p class="muted mini">Aún no agregaste jugadas.</p>';
     } else {
       host.innerHTML = cart.map(function (line, idx) {
@@ -55,13 +57,13 @@
       }).join('');
       host.querySelectorAll('[data-edit]').forEach(function (btn) { btn.addEventListener('click', function () { editLine(btn.dataset.edit); }); });
       host.querySelectorAll('[data-duplicate]').forEach(function (btn) {
-        btn.addEventListener('click', function () { PremiumGolService.duplicateInCart(groupId, programId, btn.dataset.duplicate); renderCart(); UI.toast('Jugada duplicada.', 'info'); });
+        btn.addEventListener('click', function () { PremiumGolService.duplicateInCart(groupId, program.id, btn.dataset.duplicate); renderCart(); UI.toast('Jugada duplicada.', 'info'); });
       });
       host.querySelectorAll('[data-remove]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
           var confirmed = await UI.confirmModal({ title: 'Eliminar jugada', body: 'Se quitará esta jugada del carrito.', confirmText: 'Eliminar' });
           if (!confirmed) return;
-          PremiumGolService.removeFromCart(groupId, programId, btn.dataset.remove);
+          PremiumGolService.removeFromCart(groupId, program.id, btn.dataset.remove);
           renderCart();
         });
       });
@@ -82,7 +84,7 @@
   }
 
   function editLine(localId) {
-    var cart = PremiumGolService.getCart(groupId, programId);
+    var cart = PremiumGolService.getCart(groupId, program.id);
     var line = cart.find(function (c) { return c.localId === localId; });
     if (!line) return;
     currentPicks = Object.assign({}, line.picks);
@@ -119,8 +121,93 @@
     countdownTimer = setInterval(tick, 1000);
   }
 
+  // ------------------------------------------------------------------
+  // Selector de grupo (no bloquea la vista del constructor)
+  // ------------------------------------------------------------------
+  function renderGroupPickerLoggedOut() {
+    var actions = document.querySelector('[data-group-picker-actions]');
+    var select = document.querySelector('[data-group-select]');
+    select.innerHTML = '<option value="">Inicia sesión para elegir tu grupo</option>';
+    select.disabled = true;
+    actions.innerHTML = '<a class="btn btn-outline" href="../login.html?redirect=' + encodeURIComponent(RouterUtils.currentPageId() + location.search) + '">Iniciar sesión</a>';
+    document.querySelector('[data-group-hint]').textContent = 'Arma tus 12 pronósticos libremente; para guardarlos necesitas iniciar sesión y elegir un grupo.';
+  }
+
+  function renderGroupPickerNoGroups() {
+    var actions = document.querySelector('[data-group-picker-actions]');
+    var select = document.querySelector('[data-group-select]');
+    select.innerHTML = '<option value="">Aún no tienes grupos</option>';
+    select.disabled = true;
+    actions.innerHTML = '<a class="btn btn-outline" href="../grupos/unirse.html">Unirme con código</a><a class="btn btn-primary" href="../grupos/crear.html">Crear grupo</a>';
+    document.querySelector('[data-group-hint]').textContent = 'Crea un grupo privado o únete con un código para registrar tu jugada.';
+  }
+
+  async function renderGroupPickerWithGroups(groups) {
+    var select = document.querySelector('[data-group-select]');
+    var actions = document.querySelector('[data-group-picker-actions]');
+    actions.innerHTML = '<a class="btn btn-outline" href="../grupos/crear.html">Crear otro grupo</a>';
+    select.disabled = false;
+    select.innerHTML = '<option value="">Selecciona un grupo…</option>' + groups.map(function (g) {
+      return '<option value="' + g.id + '">' + g.name + ' · ' + Formatters.prizeModeLabel(g.prizeMode) + '</option>';
+    }).join('');
+    document.querySelector('[data-group-hint]').textContent = 'Cada ticket se suma al pozo del grupo que elijas aquí.';
+
+    var preselect = groupId || (groups.length === 1 ? groups[0].id : '');
+    if (preselect && groups.some(function (g) { return g.id === preselect; })) {
+      select.value = preselect;
+      await selectGroup(preselect);
+    }
+
+    select.addEventListener('change', function () { selectGroup(select.value); });
+  }
+
+  async function selectGroup(newGroupId) {
+    groupId = newGroupId || null;
+    if (!groupId) {
+      group = null;
+      document.querySelector('[data-pool-label]').textContent = '—';
+      document.querySelector('[data-mode-label]').textContent = '—';
+      document.querySelector('[data-mode-desc]').textContent = '';
+      renderCart();
+      return;
+    }
+    var groupRes = await Api.getGroup(groupId);
+    if (!groupRes.ok) { UI.toast(groupRes.error.message, 'error'); groupId = null; return; }
+    group = groupRes.data.group;
+
+    document.querySelector('[data-mode-label]').textContent = Formatters.prizeModeLabel(group.prizeMode);
+    document.querySelector('[data-mode-desc]').textContent = MODE_DESCRIPTIONS[group.prizeMode] || '';
+
+    var poolRes = await Api.getGroupPool(groupId, program.id);
+    if (poolRes.ok) {
+      var poolLabel = group.prizeMode === 'HIGHEST_SCORE' ? Formatters.money(poolRes.data.pool.weeklyPoolCents) : Formatters.money(poolRes.data.progressivePoolCents);
+      document.querySelector('[data-pool-label]').textContent = poolLabel;
+    }
+    renderCart();
+  }
+
+  async function setupGroupPicker() {
+    if (!currentUser) { renderGroupPickerLoggedOut(); return; }
+    var groupsRes = await Api.getMyGroups();
+    var groups = groupsRes.ok ? groupsRes.data.groups : [];
+    if (!groups.length) { renderGroupPickerNoGroups(); return; }
+    await renderGroupPickerWithGroups(groups);
+  }
+
+  async function requireGroupOrPrompt() {
+    if (groupId) return true;
+    if (!currentUser) {
+      UI.toast('Inicia sesión para elegir tu grupo y guardar tu jugada.', 'info');
+    } else {
+      UI.toast('Selecciona un grupo antes de agregar la jugada al carrito.', 'error');
+    }
+    document.querySelector('[data-group-select]').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+
   async function confirmPurchase() {
-    var cart = PremiumGolService.getCart(groupId, programId);
+    if (!(await requireGroupOrPrompt())) return;
+    var cart = PremiumGolService.getCart(groupId, program.id);
     var totals = PremiumGolService.cartTotals(cart, program);
     if (!totals.isComplete) { UI.toast('Hay jugadas incompletas en el carrito.', 'error'); return; }
 
@@ -133,7 +220,7 @@
 
     document.querySelector('[data-confirm-btn]').disabled = true;
     document.querySelector('[data-mobile-confirm]').disabled = true;
-    var res = await PremiumGolService.checkout(groupId, programId);
+    var res = await PremiumGolService.checkout(groupId, program.id);
     if (!res.ok) {
       UI.toast(res.error.message, 'error');
       if (res.error.code === 'INSUFFICIENT_BALANCE') setTimeout(function () { location.href = '../saldo.html'; }, 900);
@@ -145,48 +232,38 @@
   }
 
   async function init() {
-    var user = await AuthService.requireAuth('login.html');
-    if (!user) return;
+    var userRes = await Api.getCurrentUser();
+    currentUser = userRes.ok ? userRes.data.user : null;
 
+    var requestedProgramId = RouterUtils.getQueryParam('programId');
     groupId = RouterUtils.getQueryParam('groupId');
-    programId = RouterUtils.getQueryParam('programId');
-    if (!groupId || !programId) { location.href = '../grupos/index.html'; return; }
 
-    var programRes = await Api.getProgram(programId);
-    var groupRes = await Api.getGroup(groupId);
-    if (!programRes.ok || !groupRes.ok) {
-      document.querySelector('[data-loading]').innerHTML = '<div class="empty-state"><span class="pill">No disponible</span><p class="muted">' + (programRes.ok ? groupRes.error.message : programRes.error.message) + '</p></div>';
+    var programRes = requestedProgramId ? await Api.getProgram(requestedProgramId) : await Api.getOpenProgram();
+    if (!programRes.ok) {
+      document.querySelector('[data-loading]').innerHTML = '<div class="empty-state"><span class="pill">Sin programa</span><p class="muted">No hay un programa de PremiumGol abierto en este momento.</p></div>';
       return;
     }
     program = programRes.data.program;
-    group = groupRes.data.group;
 
     document.querySelector('[data-loading]').hidden = true;
     document.querySelector('[data-content]').hidden = false;
-    document.querySelector('[data-group-name]').textContent = group.name;
-    document.querySelector('[data-program-title]').textContent = program.name;
+    document.querySelector('[data-program-name]').textContent = program.name;
     document.querySelector('[data-ticket-price]').textContent = Formatters.money(program.ticketPriceCents);
-    document.querySelector('[data-mode-label]').textContent = Formatters.prizeModeLabel(group.prizeMode);
-    document.querySelector('[data-mode-desc]').textContent = MODE_DESCRIPTIONS[group.prizeMode] || '';
-
-    var poolRes = await Api.getGroupPool(groupId, programId);
-    if (poolRes.ok) {
-      var poolLabel = group.prizeMode === 'HIGHEST_SCORE' ? Formatters.money(poolRes.data.pool.weeklyPoolCents) : Formatters.money(poolRes.data.progressivePoolCents);
-      document.querySelector('[data-pool-label]').textContent = poolLabel;
-    }
 
     renderMatches();
     updateProgress();
-    await renderCart();
     startCountdown();
+    await setupGroupPicker();
+    await renderCart();
 
     document.querySelector('[data-random-btn]').addEventListener('click', function () { currentPicks = PremiumGolService.randomPicks(program); renderMatches(); updateProgress(); });
     document.querySelector('[data-clear-btn]').addEventListener('click', function () { currentPicks = {}; renderMatches(); updateProgress(); });
 
-    document.querySelector('[data-add-cart-btn]').addEventListener('click', function () {
+    document.querySelector('[data-add-cart-btn]').addEventListener('click', async function () {
       if (Object.keys(currentPicks).length < 12) { UI.toast('Completa los 12 pronósticos antes de agregar la jugada.', 'error'); return; }
-      if (editingLocalId) { PremiumGolService.updateInCart(groupId, programId, editingLocalId, currentPicks); UI.toast('Jugada actualizada.', 'success'); }
-      else { PremiumGolService.addToCart(groupId, programId, currentPicks); UI.toast('Jugada agregada al carrito.', 'success'); }
+      if (!(await requireGroupOrPrompt())) return;
+      if (editingLocalId) { PremiumGolService.updateInCart(groupId, program.id, editingLocalId, currentPicks); UI.toast('Jugada actualizada.', 'success'); }
+      else { PremiumGolService.addToCart(groupId, program.id, currentPicks); UI.toast('Jugada agregada al carrito.', 'success'); }
       resetBuilder();
       renderCart();
     });
