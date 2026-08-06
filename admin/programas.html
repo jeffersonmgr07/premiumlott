@@ -4,7 +4,7 @@
 <main class="main"><section class="section">
 <div class="section-head"><div><p class="eyebrow">Administración</p><h1 class="title">Gestión de programas</h1></div></div>
 <div class="admin-shell">
-<nav class="admin-nav"><a href="index.html">Resumen</a><a href="programas.html" class="active">Programas</a><a href="resultados.html">Resultados</a><a href="liquidacion.html">Liquidación</a></nav>
+<nav class="admin-nav"><a href="index.html">Resumen</a><a href="programas.html" class="active">PremiumGol</a><a href="resultados.html">Resultados Gol</a><a href="liquidacion.html">Liquidación Gol</a><a href="premiumball.html">PremiumBall</a></nav>
 <div>
   <article class="card" data-status-card hidden>
     <div class="section-head"><div><p class="eyebrow" data-program-code></p><h2 data-program-name></h2></div><span class="status" data-program-status></span></div>
@@ -28,6 +28,17 @@
       <div class="field"><label for="voidPolicy">Política de partidos anulados</label>
         <select id="voidPolicy" name="voidPolicy"><option value="VOID_COUNTS_AS_HIT">Anulado cuenta como acierto (predeterminado)</option><option value="VOID_EXCLUDED">Anulado no cuenta como acierto</option></select>
       </div>
+      <div class="grid grid-2">
+        <div class="field"><label for="prizeMode">Modalidad de premiación</label>
+          <select id="prizeMode" name="prizeMode">
+            <option value="HIGHEST_SCORE">Mayor cantidad de aciertos</option>
+            <option value="PERFECT_12">12 aciertos o pozo acumulado</option>
+            <option value="MIXED">Mixta (semanal + acumulado)</option>
+          </select>
+        </div>
+        <div class="field"><label for="prizePoolCents">Pozo (US$)</label><input id="prizePoolCents" name="prizePoolDollars" type="number" min="1" step="1" value="1000" required></div>
+      </div>
+      <p class="mini muted" data-carry-hint></p>
       <h4 style="margin-top:.6rem">Partidos (exactamente 12)</h4>
       <div data-matches-form></div>
       <button class="btn btn-primary" type="submit" data-submit-btn>Guardar programa</button>
@@ -48,7 +59,7 @@
 <script src="../assets/js/services/api-client.js"></script>
 <script src="../assets/js/services/auth-service.js"></script>
 <script src="../assets/js/services/wallet-service.js"></script>
-<script src="../assets/js/services/group-service.js"></script>
+
 <script src="../assets/js/services/premiumgol-service.js"></script>
 <script src="../assets/js/services/admin-service.js"></script>
 <script src="../assets/js/app.js"></script>

@@ -1,16 +1,18 @@
 (function () {
-  function renderGroupBlock(g) {
-    var winnersTable = function (title, winners, poolLabel) {
-      if (!winners.length) return '<p class="mini muted">' + title + ': sin ganadores en este cálculo. ' + poolLabel + '</p>';
-      return '<h4 style="margin-top:.6rem">' + title + ' · ' + poolLabel + '</h4>' +
-        '<div class="table-wrap"><table><thead><tr><th>Ticket</th><th>Aciertos</th><th>Premio</th></tr></thead><tbody>' +
-        winners.map(function (w) { return '<tr><td>' + w.code + '</td><td>' + w.hits + '/12</td><td><strong>' + w.prizeLabel + '</strong></td></tr>'; }).join('') +
-        '</tbody></table></div>';
-    };
+  function winnersTable(title, winners, poolLabel) {
+    if (!winners.length) return '<p class="mini muted">' + title + ': sin ganadores en este cálculo. ' + poolLabel + '</p>';
+    return '<h4 style="margin-top:.6rem">' + title + ' · ' + poolLabel + '</h4>' +
+      '<div class="table-wrap"><table><thead><tr><th>Ticket</th><th>Aciertos</th><th>Premio</th></tr></thead><tbody>' +
+      winners.map(function (w) { return '<tr><td>' + w.code + '</td><td>' + w.hits + '/12</td><td><strong>' + w.prizeLabel + '</strong></td></tr>'; }).join('') +
+      '</tbody></table></div>';
+  }
 
-    return '<article class="card" style="margin-bottom:1rem"><div class="section-head"><div><h3>' + g.groupName + '</h3><p class="muted">' + g.modeLabel + ' · ' + g.ticketCount + ' tickets · Máximo ' + g.maxHits + '/12 aciertos</p></div></div>' +
-      (g.mode !== 'PERFECT_12' ? winnersTable('Pozo semanal', g.weeklyWinners, g.weeklyPoolLabel) : '') +
-      (g.mode !== 'HIGHEST_SCORE' ? '<div style="margin-top:.6rem"><p class="mini muted">Acumulado previo: ' + g.progressiveCarryInLabel + ' + aporte de este programa = ' + g.progressivePoolLabel + '</p>' + winnersTable('Pozo progresivo 12/12', g.progressiveWinners, g.progressivePoolLabel) + '</div>' : '') +
+  function renderPoolBlock(p) {
+    var showWeekly = p.prizeMode === 'HIGHEST_SCORE' || p.prizeMode === 'MIXED';
+    var showProgressive = p.prizeMode === 'PERFECT_12' || p.prizeMode === 'MIXED';
+    return '<article class="card" style="margin-bottom:1rem"><div class="section-head"><div><h3>Pozo del programa</h3><p class="muted">' + p.modeLabel + ' · ' + p.ticketCount + ' tickets · Máximo ' + p.maxHits + '/12 aciertos</p></div></div>' +
+      (showWeekly ? winnersTable('Pozo semanal', p.weeklyWinners, p.weeklyPoolLabel) : '') +
+      (showProgressive ? '<div style="margin-top:.6rem"><p class="mini muted">Acumulado previo: ' + p.progressiveCarryInLabel + ' + aporte de este programa = ' + p.progressivePoolLabel + '</p>' + winnersTable('Pozo progresivo 12/12', p.progressiveWinners, p.progressivePoolLabel) + '</div>' : '') +
       '</article>';
   }
 
@@ -22,21 +24,15 @@
 
     if (program.status === 'settled') {
       var settlement = programRes.data.settlement;
-      host.innerHTML = '<article class="card"><span class="status ok">Liquidado</span><p class="muted" style="margin-top:.4rem">Liquidado el ' + Formatters.dateTimeLima(program.settledAt) + ' · Total distribuido: <strong>' + Formatters.money(settlement.totalPrizeCentsDistributed) + '</strong></p></article>' +
-        (settlement.groups || []).map(function (g) {
-          return renderGroupBlock(Object.assign({}, g, {
-            weeklyPoolLabel: Formatters.money(g.weeklyPoolCents), progressivePoolLabel: Formatters.money(g.progressivePoolCents),
-            progressiveCarryInLabel: Formatters.money(g.progressiveCarryInCents), modeLabel: Formatters.prizeModeLabel(g.mode),
-            weeklyWinners: g.weeklyWinners.map(function (w) { return Object.assign({}, w, { prizeLabel: Formatters.money(w.prizeCents) }); }),
-            progressiveWinners: g.progressiveWinners.map(function (w) { return Object.assign({}, w, { prizeLabel: Formatters.money(w.prizeCents) }); })
-          }));
-        }).join('');
+      var formatted = AdminService.formatSettlementPreview(Object.assign({}, settlement, { program: program, mode: program.prizeMode, prizeMode: program.prizeMode, ticketCount: '—', maxHits: '—' }));
+      host.innerHTML = '<article class="card"><span class="status ok">Liquidado</span><p class="muted" style="margin-top:.4rem">Liquidado el ' + Formatters.dateTimeLima(program.settledAt) + ' · Total distribuido: <strong>' + Formatters.usd(settlement.totalPrizeCentsDistributed) + '</strong></p></article>' +
+        renderPoolBlock(formatted);
       return;
     }
 
     var previewRes = await Api.previewSettlement(id);
     if (!previewRes.ok) { host.innerHTML = '<p class="muted">' + previewRes.error.message + '</p>'; return; }
-    var preview = AdminService.formatSettlementPreview(previewRes.data);
+    var preview = AdminService.formatSettlementPreview(Object.assign({}, previewRes.data, { prizeMode: program.prizeMode }));
 
     if (!preview.ready) {
       host.innerHTML = '<article class="card"><span class="status warn">Resultados incompletos</span><p class="muted" style="margin-top:.4rem">Completa los resultados de los 12 partidos en la sección Resultados antes de previsualizar la liquidación.</p><a class="btn btn-outline" style="margin-top:.6rem" href="resultados.html?id=' + id + '">Ir a Resultados</a></article>';
@@ -44,7 +40,7 @@
     }
 
     host.innerHTML = '<article class="card"><h3>Previsualización</h3><p class="muted">Revisa la distribución antes de confirmar. Esta acción es irreversible y solo puede ejecutarse una vez.</p><button class="btn btn-primary" style="margin-top:.6rem" data-settle-btn>Liquidar programa</button></article>' +
-      preview.groups.map(renderGroupBlock).join('');
+      renderPoolBlock(preview);
 
     document.querySelector('[data-settle-btn]').addEventListener('click', async function () {
       var confirmed = await UI.confirmModal({

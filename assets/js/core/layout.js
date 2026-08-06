@@ -26,8 +26,8 @@
       '<button class="btn btn-ghost mobile-toggle" data-mobile-toggle>Menú</button>' +
       '<nav class="nav">' +
       '<a href="' + p + 'index.html" data-i18n="nav.home">Inicio</a>' +
-      '<a href="' + p + 'index.html#juegos" data-i18n="nav.games">Juegos</a>' +
-      '<a href="' + p + 'grupos/index.html">Mis grupos</a>' +
+      '<a href="' + p + 'premiumgol/jugar.html">PremiumGol</a>' +
+      '<a href="' + p + 'premiumball/index.html">PremiumBall</a>' +
       '<a href="' + p + 'transparencia.html">Transparencia</a>' +
       '</nav>' +
       '<div class="header-actions">' +

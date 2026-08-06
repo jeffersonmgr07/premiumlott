@@ -82,8 +82,9 @@
     document.querySelectorAll('[data-user-name]').forEach(function (el) { el.textContent = user ? (user.firstName + ' ' + user.lastName).trim() : 'Invitado Premium'; });
     document.querySelectorAll('[data-balance]').forEach(function (el) { el.textContent = Formatters.money(wallet.balanceCents); });
     var legacyCount = state.legacyTickets.filter(function (t) { return t.userId === userId; }).length;
-    var newCount = state.tickets.filter(function (t) { return t.userId === userId; }).length;
-    document.querySelectorAll('[data-ticket-count]').forEach(function (el) { el.textContent = legacyCount + newCount; });
+    var golCount = state.tickets.filter(function (t) { return t.userId === userId; }).length;
+    var ballCount = (state.ballTickets || []).filter(function (t) { return t.userId === userId; }).length;
+    document.querySelectorAll('[data-ticket-count]').forEach(function (el) { el.textContent = legacyCount + golCount + ballCount; });
   }
 
   document.addEventListener('DOMContentLoaded', function () {

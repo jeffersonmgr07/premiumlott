@@ -4,17 +4,17 @@
 <main class="main"><section class="section">
 <div class="section-head"><div><p class="eyebrow">Administración</p><h1 class="title">Panel de PremiumGol</h1><p class="lead">Acceso exclusivo de demostración para gestionar programas, resultados y liquidaciones.</p></div></div>
 <div class="admin-shell">
-<nav class="admin-nav"><a href="index.html" class="active">Resumen</a><a href="programas.html">Programas</a><a href="resultados.html">Resultados</a><a href="liquidacion.html">Liquidación</a></nav>
+<nav class="admin-nav"><a href="index.html" class="active">Resumen</a><a href="programas.html">PremiumGol</a><a href="resultados.html">Resultados Gol</a><a href="liquidacion.html">Liquidación Gol</a><a href="premiumball.html">PremiumBall</a></nav>
 <div>
   <div class="grid grid-4">
     <div class="card compact admin-stat"><span class="muted">Usuarios</span><strong data-stat-users>—</strong></div>
-    <div class="card compact admin-stat"><span class="muted">Grupos</span><strong data-stat-groups>—</strong></div>
-    <div class="card compact admin-stat"><span class="muted">Tickets activos</span><strong data-stat-tickets>—</strong></div>
-    <div class="card compact admin-stat"><span class="muted">Ingresos plataforma (demo)</span><strong data-stat-revenue>—</strong></div>
+    <div class="card compact admin-stat"><span class="muted">Tickets PremiumGol</span><strong data-stat-tickets>—</strong></div>
+    <div class="card compact admin-stat"><span class="muted">Ingresos por tickets (demo)</span><strong data-stat-revenue>—</strong></div>
+    <div class="card compact admin-stat"><span class="muted">Premios distribuidos (demo)</span><strong data-stat-prizes>—</strong></div>
   </div>
   <article class="card" style="margin-top:1rem">
-    <h3>Programas</h3>
-    <div class="table-wrap"><table><thead><tr><th>Programa</th><th>Estado</th><th>Partidos</th><th>Tickets</th><th>Grupos</th><th>Cierre</th><th></th></tr></thead><tbody data-programs-body><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
+    <h3>Programas PremiumGol</h3>
+    <div class="table-wrap"><table><thead><tr><th>Programa</th><th>Estado</th><th>Partidos</th><th>Tickets</th><th>Cierre</th><th></th></tr></thead><tbody data-programs-body><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody></table></div>
     <a class="btn btn-primary" style="margin-top:.8rem" href="programas.html">Crear nuevo programa</a>
   </article>
   <article class="card" style="margin-top:1rem">
@@ -36,7 +36,7 @@
 <script src="../assets/js/services/api-client.js"></script>
 <script src="../assets/js/services/auth-service.js"></script>
 <script src="../assets/js/services/wallet-service.js"></script>
-<script src="../assets/js/services/group-service.js"></script>
+
 <script src="../assets/js/services/premiumgol-service.js"></script>
 <script src="../assets/js/services/admin-service.js"></script>
 <script src="../assets/js/app.js"></script>

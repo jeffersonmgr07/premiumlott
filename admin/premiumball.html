@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PremiumBall · Admin PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
+<div class="demo-banner" data-demo-banner></div>
+<header data-site-header></header>
+<main class="main"><section class="section">
+<div class="section-head"><div><p class="eyebrow">Administración</p><h1 class="title">Gestión de PremiumBall</h1></div>
+<div class="field" style="min-width:260px"><label for="draw-select">Sorteo</label><select id="draw-select" data-draw-select></select></div></div>
+<div class="admin-shell">
+<nav class="admin-nav"><a href="index.html">Resumen</a><a href="programas.html">PremiumGol</a><a href="resultados.html">Resultados Gol</a><a href="liquidacion.html">Liquidación Gol</a><a href="premiumball.html" class="active">PremiumBall</a></nav>
+<div>
+  <article class="card" data-status-card hidden>
+    <div class="section-head"><div><p class="eyebrow" data-draw-code></p><h2 data-draw-name></h2></div><span class="status" data-draw-status></span></div>
+    <div class="cart-line-actions">
+      <button class="btn btn-primary" type="button" data-open-btn hidden>Abrir sorteo</button>
+      <button class="btn btn-outline" type="button" data-close-btn hidden>Cerrar sorteo</button>
+      <button class="btn btn-ghost" type="button" data-cancel-btn hidden>Cancelar sorteo</button>
+      <button class="btn btn-outline" type="button" data-new-btn>+ Nuevo sorteo</button>
+    </div>
+  </article>
+
+  <article class="card" style="margin-top:1rem" data-draw-form-card>
+    <h3 data-form-title>Nuevo sorteo</h3>
+    <form class="form" data-draw-form novalidate>
+      <div class="field"><label for="name">Nombre del sorteo</label><input id="name" name="name" required></div>
+      <div class="field"><label for="closeAt">Cierre</label><input id="closeAt" name="closeAt" type="datetime-local" required></div>
+      <div class="grid grid-3">
+        <div class="field"><label for="mainPrizeCents">Premio mayor (US$)</label><input id="mainPrizeCents" name="mainPrizeDollars" type="number" min="1" step="1" value="5000" required></div>
+        <div class="field"><label for="siOSiPrizeCents">Premio Sí o Sí (US$)</label><input id="siOSiPrizeCents" name="siOSiPrizeDollars" type="number" min="1" step="1" value="500" required></div>
+        <div class="field"><label for="bolillapaPrizeCents">Premio Bolillapa (US$)</label><input id="bolillapaPrizeCents" name="bolillapaPrizeDollars" type="number" min="1" step="1" value="500" required></div>
+      </div>
+      <p class="mini muted">Ticket: US$ 1.00 · 6 números del 1 al 53 · Bolillapa del 1 al 10 (configuración global de PremiumBall).</p>
+      <button class="btn btn-primary" type="submit" data-submit-btn>Guardar sorteo</button>
+    </form>
+  </article>
+
+  <article class="card" style="margin-top:1rem" data-results-card hidden>
+    <h3>Bolillas ganadoras</h3>
+    <p class="mini muted" style="margin-top:.3rem">Elige exactamente 6 números y la Bolillapa. Puedes corregirlos mientras el sorteo no esté liquidado.</p>
+    <div class="ball-section-title"><strong>Números</strong><span data-results-picked>0/6</span></div>
+    <div class="number-grid" data-results-number-grid></div>
+    <div class="ball-section-title"><strong>Bolillapa</strong></div>
+    <div class="bolillapa-grid" data-results-bolillapa-grid></div>
+    <button class="btn btn-primary" style="margin-top:1rem" type="button" data-save-results-btn>Guardar resultados</button>
+  </article>
+
+  <article class="card" style="margin-top:1rem" data-siosi-card hidden>
+    <h3>Sí o Sí — bolillas extra</h3>
+    <p class="mini muted" style="margin-top:.3rem">Si nadie acertó los 6 números, agrega bolillas extra una por una hasta encontrar un ganador (máximo 10).</p>
+    <div class="chip-row" style="margin-top:.6rem" data-siosi-chips></div>
+    <div class="cart-line-actions" style="margin-top:.8rem">
+      <input type="number" min="1" max="53" placeholder="Número" data-siosi-input style="width:110px;border:1px solid var(--line);background:rgba(0,0,0,.42);color:#fff;border-radius:12px;padding:.5rem .7rem;font:inherit">
+      <button class="btn btn-outline" type="button" data-add-siosi-btn>Agregar bolilla</button>
+    </div>
+  </article>
+
+  <article class="card" style="margin-top:1rem" data-settlement-card hidden>
+    <h3 data-settlement-title>Previsualización de liquidación</h3>
+    <div data-settlement-body></div>
+    <button class="btn btn-primary" style="margin-top:1rem" type="button" data-settle-btn hidden>Liquidar sorteo</button>
+  </article>
+</div>
+</div>
+</section></main>
+<footer data-site-footer></footer>
+</div>
+<script src="../assets/js/core/store.js"></script>
+<script src="../assets/js/core/settlement.js"></script>
+<script src="../assets/js/core/formatters.js"></script>
+<script src="../assets/js/core/router-utils.js"></script>
+<script src="../assets/js/core/ui.js"></script>
+<script src="../assets/js/core/layout.js"></script>
+<script src="../assets/js/services/mock-api.js"></script>
+<script src="../assets/js/services/api-client.js"></script>
+<script src="../assets/js/services/auth-service.js"></script>
+<script src="../assets/js/services/wallet-service.js"></script>
+
+<script src="../assets/js/services/premiumball-service.js"></script>
+<script src="../assets/js/services/admin-service.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/pages/admin-premiumball.js"></script>
+</body></html>

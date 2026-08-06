@@ -68,6 +68,12 @@
     document.querySelector('#openAt').value = toLocalInput(currentProgram.openAt);
     document.querySelector('#closeAt').value = toLocalInput(currentProgram.closeAt);
     document.querySelector('#voidPolicy').value = currentProgram.voidPolicy;
+    document.querySelector('#prizeMode').value = currentProgram.prizeMode;
+    document.querySelector('#prizePoolCents').value = Math.round(currentProgram.prizePoolCents / 100);
+    var carryHint = document.querySelector('[data-carry-hint]');
+    carryHint.textContent = currentProgram.progressiveCarryInCents > 0
+      ? 'Acumulado heredado del programa anterior: ' + Formatters.usd(currentProgram.progressiveCarryInCents) + '.'
+      : '';
     renderMatchRows(currentProgram.matches);
     renderStatusCard(currentProgram);
   }
@@ -91,7 +97,8 @@
       var fd = new FormData(e.target);
       var payload = {
         name: fd.get('name'), openAt: fromLocalInput(fd.get('openAt')), closeAt: fromLocalInput(fd.get('closeAt')),
-        voidPolicy: fd.get('voidPolicy'), matches: collectMatches()
+        voidPolicy: fd.get('voidPolicy'), prizeMode: fd.get('prizeMode'), prizePoolCents: Math.round(Number(fd.get('prizePoolDollars')) * 100),
+        matches: collectMatches()
       };
       var res = programId ? await Api.updateDraftProgram(programId, payload) : await Api.createProgram(payload);
       if (!res.ok) { UI.toast(res.error.message, 'error'); return; }

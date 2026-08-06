@@ -502,17 +502,9 @@
     if (!programResp.ok) return programResp;
     var program = programResp.data.program;
     if (program.status !== 'open') return fail('PROGRAM_CLOSED', 'El programa ya se encuentra cerrado.');
-    var membership = state.groupMembers.find(function (m) { return m.groupId === payload.groupId && m.userId === session.user.id && m.status === 'ACTIVE'; });
-    if (!membership) return fail('NOT_GROUP_MEMBER', 'Debes pertenecer al grupo seleccionado.');
     var pickError = validatePicks(program, payload.picks);
     if (pickError) return fail('INCOMPLETE_PICKS', pickError);
-    var cfg = state.appConfig;
-    return ok({
-      draft: {
-        groupId: payload.groupId, programId: payload.programId, picks: payload.picks,
-        priceCents: cfg.ticketPriceCents, poolContributionCents: cfg.groupPoolContributionCents, houseFeeCents: cfg.houseFeeCents
-      }
-    });
+    return ok({ draft: { programId: payload.programId, picks: payload.picks, priceCents: program.ticketPriceCents } });
   }
 
   function purchaseTickets(payload, idempotencyKey) {
@@ -523,11 +515,6 @@
 
     var existing = state.tickets.filter(function (t) { return t.idempotencyKey === idempotencyKey; });
     if (existing.length) return ok({ tickets: existing, alreadyProcessed: true });
-
-    var group = state.groups.find(function (g) { return g.id === payload.groupId; });
-    if (!group) return fail('GROUP_NOT_FOUND', 'El grupo no existe.');
-    var membership = state.groupMembers.find(function (m) { return m.groupId === payload.groupId && m.userId === session.user.id && m.status === 'ACTIVE'; });
-    if (!membership) return fail('NOT_GROUP_MEMBER', 'Debes pertenecer al grupo seleccionado.');
 
     var program = state.programs.find(function (p) { return p.id === payload.programId; });
     if (!program) return fail('PROGRAM_NOT_FOUND', 'El programa no existe.');
@@ -542,25 +529,21 @@
       if (err) return fail('INCOMPLETE_PICKS', 'Jugada ' + (i + 1) + ': ' + err);
     }
 
-    var cfg = state.appConfig;
-    var totalCost = lines.length * cfg.ticketPriceCents;
+    var totalCost = lines.length * program.ticketPriceCents;
     var wallet = Store.ensureWallet(state, session.user.id);
     if (wallet.balanceCents < totalCost) return fail('INSUFFICIENT_BALANCE', 'Saldo insuficiente. Recarga tu billetera demo antes de continuar.');
 
     var createdTickets = [];
     Store.update(function (state) {
-      var group2 = state.groups.find(function (g) { return g.id === payload.groupId; });
       lines.forEach(function (line) {
         var ticket = {
-          id: Store.uuid(), code: Store.makeCode('PLG'), userId: session.user.id, groupId: payload.groupId, programId: payload.programId,
-          picks: line.picks, priceCents: cfg.ticketPriceCents, poolContributionCents: cfg.groupPoolContributionCents,
-          houseFeeCents: cfg.houseFeeCents, status: 'ACTIVE', purchasedAt: Store.nowIso(), idempotencyKey: idempotencyKey,
-          hits: null, isWinner: false, prizeCents: 0, settledAt: null
+          id: Store.uuid(), code: Store.makeCode('PLG'), userId: session.user.id, programId: payload.programId,
+          picks: line.picks, priceCents: program.ticketPriceCents, status: 'ACTIVE', purchasedAt: Store.nowIso(),
+          idempotencyKey: idempotencyKey, hits: null, isWinner: false, prizeCents: 0, settledAt: null
         };
         state.tickets.push(ticket);
         Object.keys(line.picks).forEach(function (mid) { state.ticketPicks.push({ id: Store.uuid(), ticketId: ticket.id, matchId: mid, pick: line.picks[mid] }); });
-        Store.ledgerEntry(state, session.user.id, 'TICKET_PURCHASE', -cfg.ticketPriceCents, { referenceType: 'ticket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code + ' · ' + group2.name });
-        Store.applyPoolContribution(state, group2, program, ticket);
+        Store.ledgerEntry(state, session.user.id, 'TICKET_PURCHASE', -program.ticketPriceCents, { referenceType: 'ticket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code });
         createdTickets.push(ticket);
       });
       Store.pushAudit(state, { actorId: session.user.id, actorRole: 'user', action: 'TICKETS_PURCHASED', entityType: 'program', entityId: program.id, metadata: { count: lines.length, idempotencyKey: idempotencyKey } });
@@ -574,26 +557,21 @@
     var state = Store.get();
     var session = requireSession(state); if (session.error) return session.error;
     var tickets = state.tickets.filter(function (t) { return t.userId === session.user.id; });
-    if (filters.groupId) tickets = tickets.filter(function (t) { return t.groupId === filters.groupId; });
     if (filters.programId) tickets = tickets.filter(function (t) { return t.programId === filters.programId; });
     if (filters.status) tickets = tickets.filter(function (t) { return t.status === filters.status; });
     tickets = tickets.map(function (t) {
       var program = state.programs.find(function (p) { return p.id === t.programId; });
-      var group = state.groups.find(function (g) { return g.id === t.groupId; });
-      return Object.assign({}, t, { programName: program ? program.name : '—', programStatus: program ? program.status : null, groupName: group ? group.name : '—' });
+      return Object.assign({}, t, { programName: program ? program.name : '—', programStatus: program ? program.status : null });
     }).sort(function (a, b) { return new Date(b.purchasedAt) - new Date(a.purchasedAt); });
     return ok({ tickets: tickets });
   }
 
-  function getGroupLeaderboard(groupId, programId) {
+  function getProgramLeaderboard(programId) {
     var state = Store.get();
-    var session = requireSession(state); if (session.error) return session.error;
-    var membership = state.groupMembers.find(function (m) { return m.groupId === groupId && m.userId === session.user.id && m.status === 'ACTIVE'; });
-    if (!membership) return fail('NOT_GROUP_MEMBER', 'No perteneces a este grupo.');
     var program = state.programs.find(function (p) { return p.id === programId; });
     if (!program) return fail('PROGRAM_NOT_FOUND', 'El programa no existe.');
     var matches = state.matches.filter(function (m) { return m.programId === programId; });
-    var tickets = state.tickets.filter(function (t) { return t.groupId === groupId && t.programId === programId && t.status === 'ACTIVE'; });
+    var tickets = state.tickets.filter(function (t) { return t.programId === programId && t.status === 'ACTIVE'; });
     var finishedCount = matches.filter(function (m) { return m.result != null; }).length;
 
     var rows = tickets.map(function (t) {
@@ -609,14 +587,17 @@
     return ok({ program: decorateProgram(state, program), totalMatches: matches.length, finishedMatches: finishedCount, rows: rows });
   }
 
-  function getGroupPool(groupId, programId) {
+  function getProgramPool(programId) {
     var state = Store.get();
-    var session = requireSession(state); if (session.error) return session.error;
-    var group = state.groups.find(function (g) { return g.id === groupId; });
-    if (!group) return fail('GROUP_NOT_FOUND', 'El grupo no existe.');
-    var pool = state.groupPools.find(function (p) { return p.groupId === groupId && p.programId === programId; }) ||
-      { groupId: groupId, programId: programId, ticketCount: 0, contributionTotalCents: 0, weeklyPoolCents: 0, progressiveContributionCents: 0 };
-    return ok({ pool: pool, prizeMode: group.prizeMode, progressivePoolCents: group.progressivePoolCents });
+    var program = state.programs.find(function (p) { return p.id === programId; });
+    if (!program) return fail('PROGRAM_NOT_FOUND', 'El programa no existe.');
+    var ticketCount = state.tickets.filter(function (t) { return t.programId === programId && t.status === 'ACTIVE'; }).length;
+    return ok({
+      prizeMode: program.prizeMode, prizePoolCents: program.prizePoolCents,
+      progressiveCarryInCents: program.progressiveCarryInCents || 0,
+      totalIfProgressive: (program.progressiveCarryInCents || 0) + program.prizePoolCents,
+      ticketCount: ticketCount, currency: program.currency || 'USD'
+    });
   }
 
   // ------------------------------------------------------------------
@@ -639,12 +620,17 @@
     var matchError = validateProgramMatches(payload.matches);
     if (matchError) return fail('INVALID_MATCHES', matchError);
     if (!payload.openAt || !payload.closeAt || new Date(payload.closeAt) <= new Date(payload.openAt)) return fail('INVALID_DATES', 'La fecha de cierre debe ser posterior a la fecha de apertura.');
+    if (['HIGHEST_SCORE', 'PERFECT_12', 'MIXED'].indexOf(payload.prizeMode) === -1) return fail('INVALID_PRIZE_MODE', 'Selecciona una modalidad de premiación válida.');
+    var prizePoolCents = Number(payload.prizePoolCents);
+    if (!prizePoolCents || prizePoolCents <= 0) return fail('INVALID_POOL', 'Ingresa un pozo válido mayor a cero.');
 
     var program = {
       id: Store.uuid(), code: payload.code || Store.makeCode('PG'), name: payload.name, status: 'draft',
       openAt: payload.openAt, closeAt: payload.closeAt, timezone: 'America/Lima',
       estimatedSettlementAt: payload.estimatedSettlementAt || new Date(new Date(payload.closeAt).getTime() + 3 * 3600000).toISOString(),
-      ticketPriceCents: state.appConfig.ticketPriceCents, voidPolicy: payload.voidPolicy || 'VOID_COUNTS_AS_HIT',
+      ticketPriceCents: state.appConfig.premiumgol.ticketPriceCents, currency: state.appConfig.premiumgol.currency,
+      voidPolicy: payload.voidPolicy || 'VOID_COUNTS_AS_HIT', prizeMode: payload.prizeMode, prizePoolCents: prizePoolCents,
+      progressiveCarryInCents: state.premiumgolCarryCents || 0,
       settledAt: null, settlementIdempotencyKey: null, createdAt: Store.nowIso(), cancelledAt: null, cancelReason: null
     };
 
@@ -669,6 +655,7 @@
       var matchError = validateProgramMatches(payload.matches);
       if (matchError) return fail('INVALID_MATCHES', matchError);
     }
+    if (payload.prizeMode && ['HIGHEST_SCORE', 'PERFECT_12', 'MIXED'].indexOf(payload.prizeMode) === -1) return fail('INVALID_PRIZE_MODE', 'Selecciona una modalidad de premiación válida.');
 
     Store.update(function (state) {
       var p = state.programs.find(function (x) { return x.id === programId; });
@@ -676,6 +663,8 @@
       if (payload.openAt) p.openAt = payload.openAt;
       if (payload.closeAt) p.closeAt = payload.closeAt;
       if (payload.voidPolicy) p.voidPolicy = payload.voidPolicy;
+      if (payload.prizeMode) p.prizeMode = payload.prizeMode;
+      if (payload.prizePoolCents) p.prizePoolCents = Number(payload.prizePoolCents);
       if (payload.matches) {
         state.matches = state.matches.filter(function (m) { return m.programId !== programId; });
         payload.matches.forEach(function (m, idx) {
@@ -785,13 +774,6 @@
       tickets.forEach(function (t) {
         t.status = 'REFUNDED';
         Store.ledgerEntry(state, t.userId, 'REFUND', t.priceCents, { referenceType: 'ticket', referenceId: t.id, description: 'Reembolso por cancelación de programa · ticket ' + t.code });
-        var group = state.groups.find(function (g) { return g.id === t.groupId; });
-        var pool = state.groupPools.find(function (p) { return p.groupId === t.groupId && p.programId === programId; });
-        if (group && pool) {
-          if (group.prizeMode === 'PERFECT_12') group.progressivePoolCents -= t.poolContributionCents;
-          else if (group.prizeMode === 'MIXED') group.progressivePoolCents -= (t.poolContributionCents - Math.round(t.poolContributionCents / 2));
-          pool.ticketCount -= 1; pool.contributionTotalCents -= t.poolContributionCents;
-        }
       });
       var p = state.programs.find(function (x) { return x.id === programId; });
       p.status = 'cancelled'; p.cancelledAt = Store.nowIso(); p.cancelReason = reason || 'Cancelado por administración';
@@ -805,8 +787,7 @@
     var session = requireAdmin(state); if (session.error) return session.error;
     var programs = state.programs.map(function (p) {
       var tickets = state.tickets.filter(function (t) { return t.programId === p.id; });
-      var groupIds = Array.from(new Set(tickets.map(function (t) { return t.groupId; })));
-      return Object.assign({}, p, { matchCount: state.matches.filter(function (m) { return m.programId === p.id; }).length, ticketCount: tickets.length, groupCount: groupIds.length });
+      return Object.assign({}, p, { matchCount: state.matches.filter(function (m) { return m.programId === p.id; }).length, ticketCount: tickets.length });
     }).sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
     return ok({ programs: programs });
   }
@@ -814,13 +795,20 @@
   function adminGetOverview() {
     var state = Store.get();
     var session = requireAdmin(state); if (session.error) return session.error;
-    var revenueCents = state.tickets.filter(function (t) { return t.status === 'ACTIVE'; }).reduce(function (sum, t) { return sum + t.houseFeeCents; }, 0);
+    var activeGolTickets = state.tickets.filter(function (t) { return t.status === 'ACTIVE'; });
+    var activeBallTickets = (state.ballTickets || []).filter(function (t) { return t.status === 'ACTIVE'; });
+    var golRevenueCents = activeGolTickets.reduce(function (sum, t) { return sum + t.priceCents; }, 0);
+    var ballRevenueCents = activeBallTickets.reduce(function (sum, t) { return sum + t.priceCents; }, 0);
+    var golPrizesCents = state.settlements.reduce(function (sum, s) { return sum + s.totalPrizeCentsDistributed; }, 0);
+    var ballPrizesCents = (state.ballSettlements || []).reduce(function (sum, s) { return sum + s.totalPrizeCentsDistributed; }, 0);
     return ok({
       userCount: state.users.filter(function (u) { return u.role === 'user'; }).length,
-      groupCount: state.groups.length,
       programCount: state.programs.length,
-      ticketCount: state.tickets.filter(function (t) { return t.status === 'ACTIVE'; }).length,
-      revenueCents: revenueCents,
+      ticketCount: activeGolTickets.length,
+      ballDrawCount: (state.ballDraws || []).length,
+      ballTicketCount: activeBallTickets.length,
+      ticketRevenueCents: golRevenueCents + ballRevenueCents,
+      prizesDistributedCents: golPrizesCents + ballPrizesCents,
       openPrograms: state.programs.filter(function (p) { return p.status === 'open'; }).length,
       pendingSettlement: state.programs.filter(function (p) { return p.status === 'results_pending' || p.status === 'closed'; }).length
     });
@@ -868,6 +856,303 @@
     return ok({ reset: true });
   }
 
+  // ------------------------------------------------------------------
+  // PremiumBall — cartilla de números
+  // ------------------------------------------------------------------
+  function isValidBallNumberSet(numbers, min, max, count) {
+    if (!Array.isArray(numbers) || numbers.length !== count) return false;
+    var seen = {};
+    for (var i = 0; i < numbers.length; i++) {
+      var n = Number(numbers[i]);
+      if (!Number.isInteger(n) || n < min || n > max) return false;
+      if (seen[n]) return false;
+      seen[n] = true;
+    }
+    return true;
+  }
+
+  function decorateBallDraw(draw) { return Object.assign({}, draw); }
+
+  function listBallDraws() {
+    var state = Store.get();
+    var draws = state.ballDraws.map(function (d) {
+      return { id: d.id, code: d.code, name: d.name, status: d.status, closeAt: d.closeAt, settledAt: d.settledAt };
+    }).sort(function (a, b) { return new Date(b.closeAt) - new Date(a.closeAt); });
+    return ok({ draws: draws });
+  }
+
+  function getBallLeaderboard(drawId) {
+    var state = Store.get();
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    var hasResults = draw.drawnNumbers && draw.drawnNumbers.length === draw.picksCount;
+    var tickets = state.ballTickets.filter(function (t) { return t.drawId === drawId && t.status === 'ACTIVE'; });
+
+    var rows = tickets.map(function (t) {
+      var user = state.users.find(function (u) { return u.id === t.userId; });
+      var hits = hasResults ? t.numbers.filter(function (n) { return draw.drawnNumbers.indexOf(n) !== -1; }).length : null;
+      var prizeType = t.isMainWinner ? 'Premio mayor' : (t.isSiOSiWinner ? 'Sí o Sí' : (t.isBolillapaWinner ? 'Bolillapa' : null));
+      return {
+        ticketId: t.id, code: t.code, userLabel: Formatters.maskUserLabel(user), numbers: t.numbers, bolillapaNumber: t.bolillapaNumber,
+        hits: hits, isWinner: !!prizeType, prizeType: prizeType, prizeCents: t.prizeCents,
+        status: draw.status === 'settled' ? 'Liquidado' : (hasResults ? 'Resultados cargados' : 'En espera del sorteo')
+      };
+    }).sort(function (a, b) { return (b.hits || 0) - (a.hits || 0) || a.code.localeCompare(b.code); })
+      .map(function (row, idx) { return Object.assign({ position: idx + 1 }, row); });
+
+    return ok({ draw: decorateBallDraw(draw), rows: rows });
+  }
+
+  function getOpenBallDraw() {
+    var state = Store.get();
+    var draw = state.ballDraws.filter(function (d) { return d.status === 'open'; }).sort(function (a, b) { return new Date(a.closeAt) - new Date(b.closeAt); })[0];
+    if (!draw) return fail('NO_OPEN_DRAW', 'No hay un sorteo de PremiumBall abierto en este momento.');
+    return ok({ draw: decorateBallDraw(draw) });
+  }
+
+  function getBallDraw(drawId) {
+    var state = Store.get();
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    var settlement = state.ballSettlements.find(function (s) { return s.drawId === drawId; });
+    return ok({ draw: decorateBallDraw(draw), settlement: settlement || null });
+  }
+
+  function purchaseBallTickets(payload, idempotencyKey) {
+    payload = payload || {};
+    var state = Store.get();
+    var session = requireSession(state); if (session.error) return session.error;
+    if (!session.user.emailVerified) return fail('EMAIL_NOT_VERIFIED', 'Verifica tu correo antes de registrar jugadas.');
+
+    var existing = state.ballTickets.filter(function (t) { return t.idempotencyKey === idempotencyKey; });
+    if (existing.length) return ok({ tickets: existing, alreadyProcessed: true });
+
+    var draw = state.ballDraws.find(function (d) { return d.id === payload.drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (draw.status !== 'open' || new Date(draw.closeAt) <= new Date()) return fail('DRAW_CLOSED', 'El sorteo ya se encuentra cerrado.');
+
+    var lines = payload.tickets || [];
+    if (!lines.length) return fail('EMPTY_CART', 'Agrega al menos una jugada antes de confirmar.');
+    for (var i = 0; i < lines.length; i++) {
+      if (!isValidBallNumberSet(lines[i].numbers, draw.numberMin, draw.numberMax, draw.picksCount)) {
+        return fail('INVALID_NUMBERS', 'Jugada ' + (i + 1) + ': elige ' + draw.picksCount + ' números distintos entre ' + draw.numberMin + ' y ' + draw.numberMax + '.');
+      }
+      var bp = Number(lines[i].bolillapaNumber);
+      if (!Number.isInteger(bp) || bp < draw.bolillapaMin || bp > draw.bolillapaMax) {
+        return fail('INVALID_BOLILLAPA', 'Jugada ' + (i + 1) + ': elige una Bolillapa entre ' + draw.bolillapaMin + ' y ' + draw.bolillapaMax + '.');
+      }
+    }
+
+    var totalCost = lines.length * draw.ticketPriceCents;
+    var wallet = Store.ensureWallet(state, session.user.id);
+    if (wallet.balanceCents < totalCost) return fail('INSUFFICIENT_BALANCE', 'Saldo insuficiente. Recarga tu billetera demo antes de continuar.');
+
+    var createdTickets = [];
+    Store.update(function (state) {
+      lines.forEach(function (line) {
+        var ticket = {
+          id: Store.uuid(), code: Store.makeCode('PLB'), userId: session.user.id, drawId: payload.drawId,
+          numbers: line.numbers.map(Number).sort(function (a, b) { return a - b; }), bolillapaNumber: Number(line.bolillapaNumber),
+          priceCents: draw.ticketPriceCents, status: 'ACTIVE', purchasedAt: Store.nowIso(), idempotencyKey: idempotencyKey,
+          hits: null, isMainWinner: false, isSiOSiWinner: false, isBolillapaWinner: false, prizeCents: 0, settledAt: null
+        };
+        state.ballTickets.push(ticket);
+        Store.ledgerEntry(state, session.user.id, 'TICKET_PURCHASE', -draw.ticketPriceCents, { referenceType: 'ballTicket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code });
+        createdTickets.push(ticket);
+      });
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'user', action: 'BALL_TICKETS_PURCHASED', entityType: 'ballDraw', entityId: draw.id, metadata: { count: lines.length, idempotencyKey: idempotencyKey } });
+    });
+
+    return ok({ tickets: createdTickets });
+  }
+
+  function getMyBallTickets(filters) {
+    filters = filters || {};
+    var state = Store.get();
+    var session = requireSession(state); if (session.error) return session.error;
+    var tickets = state.ballTickets.filter(function (t) { return t.userId === session.user.id; });
+    if (filters.drawId) tickets = tickets.filter(function (t) { return t.drawId === filters.drawId; });
+    if (filters.status) tickets = tickets.filter(function (t) { return t.status === filters.status; });
+    tickets = tickets.map(function (t) {
+      var draw = state.ballDraws.find(function (d) { return d.id === t.drawId; });
+      return Object.assign({}, t, { drawName: draw ? draw.name : '—', drawStatus: draw ? draw.status : null });
+    }).sort(function (a, b) { return new Date(b.purchasedAt) - new Date(a.purchasedAt); });
+    return ok({ tickets: tickets });
+  }
+
+  function validateBallDrawPayload(payload, cfgBall) {
+    if (!payload.name) return 'MISSING_FIELDS';
+    if (!payload.closeAt) return 'INVALID_DATES';
+    if (!payload.mainPrizeCents || !payload.siOSiPrizeCents || !payload.bolillapaPrizeCents) return 'INVALID_PRIZES';
+    return null;
+  }
+
+  function createBallDraw(payload) {
+    payload = payload || {};
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var cfgBall = state.appConfig.premiumball;
+    var errCode = validateBallDrawPayload(payload, cfgBall);
+    if (errCode === 'MISSING_FIELDS') return fail('MISSING_FIELDS', 'Ingresa un nombre para el sorteo.');
+    if (errCode === 'INVALID_DATES') return fail('INVALID_DATES', 'Ingresa una fecha de cierre válida.');
+    if (errCode === 'INVALID_PRIZES') return fail('INVALID_PRIZES', 'Ingresa los tres montos de premio.');
+
+    var draw = {
+      id: Store.uuid(), code: Store.makeCode('PB'), name: payload.name, status: 'draft',
+      openAt: Store.nowIso(), closeAt: payload.closeAt, timezone: state.appConfig.timezone,
+      ticketPriceCents: cfgBall.ticketPriceCents, currency: cfgBall.currency,
+      numberMin: cfgBall.numberMin, numberMax: cfgBall.numberMax, picksCount: cfgBall.picksCount,
+      bolillapaMin: cfgBall.bolillapaMin, bolillapaMax: cfgBall.bolillapaMax,
+      mainPrizeCents: Number(payload.mainPrizeCents), siOSiPrizeCents: Number(payload.siOSiPrizeCents), bolillapaPrizeCents: Number(payload.bolillapaPrizeCents),
+      drawnNumbers: [], siOSiExtraNumbers: [], bolillapaNumber: null,
+      settledAt: null, settlementIdempotencyKey: null, createdAt: Store.nowIso(), cancelledAt: null, cancelReason: null
+    };
+
+    Store.update(function (state) {
+      state.ballDraws.push(draw);
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_CREATED', entityType: 'ballDraw', entityId: draw.id });
+    });
+    return ok({ draw: draw });
+  }
+
+  function updateDraftBallDraw(drawId, payload) {
+    payload = payload || {};
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (draw.status !== 'draft') return fail('DRAW_NOT_DRAFT', 'Solo se puede editar un sorteo en estado borrador.');
+
+    Store.update(function (state) {
+      var d = state.ballDraws.find(function (x) { return x.id === drawId; });
+      if (payload.name) d.name = payload.name;
+      if (payload.closeAt) d.closeAt = payload.closeAt;
+      if (payload.mainPrizeCents) d.mainPrizeCents = Number(payload.mainPrizeCents);
+      if (payload.siOSiPrizeCents) d.siOSiPrizeCents = Number(payload.siOSiPrizeCents);
+      if (payload.bolillapaPrizeCents) d.bolillapaPrizeCents = Number(payload.bolillapaPrizeCents);
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_UPDATED', entityType: 'ballDraw', entityId: drawId });
+    });
+    return ok({ draw: state.ballDraws.find(function (d) { return d.id === drawId; }) });
+  }
+
+  function openBallDraw(drawId) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (draw.status !== 'draft') return fail('DRAW_NOT_DRAFT', 'Solo se puede abrir un sorteo en estado borrador.');
+    Store.update(function (state) {
+      state.ballDraws.find(function (d) { return d.id === drawId; }).status = 'open';
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_OPENED', entityType: 'ballDraw', entityId: drawId });
+    });
+    return ok({ draw: state.ballDraws.find(function (d) { return d.id === drawId; }) });
+  }
+
+  function closeBallDraw(drawId) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (draw.status !== 'open') return fail('DRAW_NOT_OPEN', 'Solo se puede cerrar un sorteo abierto.');
+    Store.update(function (state) {
+      state.ballDraws.find(function (d) { return d.id === drawId; }).status = 'results_pending';
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_CLOSED', entityType: 'ballDraw', entityId: drawId });
+    });
+    return ok({ draw: state.ballDraws.find(function (d) { return d.id === drawId; }) });
+  }
+
+  function setBallDrawNumbers(drawId, payload) {
+    payload = payload || {};
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (['closed', 'results_pending'].indexOf(draw.status) === -1) return fail('DRAW_NOT_EDITABLE', 'Solo se pueden cargar resultados en un sorteo cerrado.');
+    if (!isValidBallNumberSet(payload.drawnNumbers, draw.numberMin, draw.numberMax, draw.picksCount)) {
+      return fail('INVALID_NUMBERS', 'Ingresa ' + draw.picksCount + ' números ganadores válidos y distintos.');
+    }
+    var bp = Number(payload.bolillapaNumber);
+    if (!Number.isInteger(bp) || bp < draw.bolillapaMin || bp > draw.bolillapaMax) {
+      return fail('INVALID_BOLILLAPA', 'Ingresa una Bolillapa válida entre ' + draw.bolillapaMin + ' y ' + draw.bolillapaMax + '.');
+    }
+    Store.update(function (state) {
+      var d = state.ballDraws.find(function (x) { return x.id === drawId; });
+      d.drawnNumbers = payload.drawnNumbers.map(Number).sort(function (a, b) { return a - b; });
+      d.bolillapaNumber = bp;
+      d.status = 'results_pending';
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_RESULTS_SET', entityType: 'ballDraw', entityId: drawId, metadata: { drawnNumbers: d.drawnNumbers, bolillapaNumber: bp } });
+    });
+    return ok({ draw: state.ballDraws.find(function (d) { return d.id === drawId; }) });
+  }
+
+  function addSiOSiNumber(drawId, number) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (!draw.drawnNumbers || draw.drawnNumbers.length !== draw.picksCount) return fail('MAIN_NUMBERS_REQUIRED', 'Ingresa primero las bolillas principales.');
+    var n = Number(number);
+    if (!Number.isInteger(n) || n < draw.numberMin || n > draw.numberMax) return fail('INVALID_NUMBERS', 'Número fuera de rango.');
+    if (draw.drawnNumbers.indexOf(n) !== -1 || (draw.siOSiExtraNumbers || []).indexOf(n) !== -1) return fail('DUPLICATE_NUMBER', 'Esa bolilla ya fue sorteada.');
+    var maxExtra = state.appConfig.premiumball.siOSiMaxExtraNumbers;
+    if ((draw.siOSiExtraNumbers || []).length >= maxExtra) return fail('MAX_EXTRA_REACHED', 'Se alcanzó el máximo de bolillas extra (' + maxExtra + ').');
+
+    Store.update(function (state) {
+      var d = state.ballDraws.find(function (x) { return x.id === drawId; });
+      d.siOSiExtraNumbers = (d.siOSiExtraNumbers || []).concat([n]);
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_SIOSI_NUMBER_ADDED', entityType: 'ballDraw', entityId: drawId, metadata: { number: n } });
+    });
+    return ok({ draw: state.ballDraws.find(function (d) { return d.id === drawId; }) });
+  }
+
+  function previewBallSettlement(drawId) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (draw.settledAt) return fail('DRAW_ALREADY_SETTLED', 'El sorteo ya se encuentra liquidado.');
+    return ok(Settlement.previewBallSettlement(state, drawId));
+  }
+
+  function settleBallDraw(drawId, idempotencyKey) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var result = Store.update(function (state) {
+      return Settlement.settleBallDraw(state, drawId, { actorId: session.user.id, actorRole: 'admin', idempotencyKey: idempotencyKey });
+    });
+    if (!result || !result.ok) return result || fail('SETTLEMENT_FAILED', 'No se pudo liquidar el sorteo.');
+    return ok(result.settlement);
+  }
+
+  function cancelBallDraw(drawId, reason) {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draw = state.ballDraws.find(function (d) { return d.id === drawId; });
+    if (!draw) return fail('DRAW_NOT_FOUND', 'El sorteo no existe.');
+    if (['settled', 'cancelled'].indexOf(draw.status) !== -1) return fail('DRAW_NOT_CANCELLABLE', 'Un sorteo liquidado o ya cancelado no puede cancelarse.');
+    Store.update(function (state) {
+      var tickets = state.ballTickets.filter(function (t) { return t.drawId === drawId && t.status === 'ACTIVE'; });
+      tickets.forEach(function (t) {
+        t.status = 'REFUNDED';
+        Store.ledgerEntry(state, t.userId, 'REFUND', t.priceCents, { referenceType: 'ballTicket', referenceId: t.id, description: 'Reembolso por cancelación de sorteo · ticket ' + t.code });
+      });
+      var d = state.ballDraws.find(function (x) { return x.id === drawId; });
+      d.status = 'cancelled'; d.cancelledAt = Store.nowIso(); d.cancelReason = reason || 'Cancelado por administración';
+      Store.pushAudit(state, { actorId: session.user.id, actorRole: 'admin', action: 'BALL_DRAW_CANCELLED', entityType: 'ballDraw', entityId: drawId, metadata: { reason: reason, refundedTickets: tickets.length } });
+    });
+    return ok({ cancelled: true });
+  }
+
+  function adminListBallDraws() {
+    var state = Store.get();
+    var session = requireAdmin(state); if (session.error) return session.error;
+    var draws = state.ballDraws.map(function (d) {
+      var tickets = state.ballTickets.filter(function (t) { return t.drawId === d.id; });
+      return Object.assign({}, d, { ticketCount: tickets.length });
+    }).sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+    return ok({ draws: draws });
+  }
+
   global.MockApi = {
     registerUser: registerUser, login: login, logout: logout, getCurrentUser: getCurrentUser, getCurrentUserSync: getCurrentUserSync,
     requestEmailVerification: requestEmailVerification, verifyEmailCode: verifyEmailCode, resendEmailVerification: resendEmailVerification,
@@ -878,7 +1163,7 @@
     transferOwnership: transferOwnership, setGroupJoinLocked: setGroupJoinLocked,
 
     listPrograms: listPrograms, getOpenProgram: getOpenProgram, getProgram: getProgram, createTicketDraft: createTicketDraft,
-    purchaseTickets: purchaseTickets, getMyTickets: getMyTickets, getGroupLeaderboard: getGroupLeaderboard, getGroupPool: getGroupPool,
+    purchaseTickets: purchaseTickets, getMyTickets: getMyTickets, getProgramLeaderboard: getProgramLeaderboard, getProgramPool: getProgramPool,
 
     createProgram: createProgram, updateDraftProgram: updateDraftProgram, openProgram: openProgram, closeProgram: closeProgram,
     setMatchResult: setMatchResult, correctMatchResult: correctMatchResult, previewSettlement: previewSettlement,
@@ -886,6 +1171,12 @@
     adminGetOverview: adminGetOverview, adminGetAuditLog: adminGetAuditLog,
 
     getWallet: getWallet, getWalletLedger: getWalletLedger, topUpDemoBalance: topUpDemoBalance, resetDemoAccount: resetDemoAccount,
+
+    listBallDraws: listBallDraws, getBallLeaderboard: getBallLeaderboard, getOpenBallDraw: getOpenBallDraw, getBallDraw: getBallDraw, purchaseBallTickets: purchaseBallTickets,
+    getMyBallTickets: getMyBallTickets, createBallDraw: createBallDraw, updateDraftBallDraw: updateDraftBallDraw,
+    openBallDraw: openBallDraw, closeBallDraw: closeBallDraw, setBallDrawNumbers: setBallDrawNumbers, addSiOSiNumber: addSiOSiNumber,
+    previewBallSettlement: previewBallSettlement, settleBallDraw: settleBallDraw, cancelBallDraw: cancelBallDraw,
+    adminListBallDraws: adminListBallDraws,
 
     sanitizeUser: sanitizeUser, Validators: Validators
   };

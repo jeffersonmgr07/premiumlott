@@ -8,9 +8,9 @@
     var overview = await Api.adminGetOverview();
     if (overview.ok) {
       document.querySelector('[data-stat-users]').textContent = overview.data.userCount;
-      document.querySelector('[data-stat-groups]').textContent = overview.data.groupCount;
-      document.querySelector('[data-stat-tickets]').textContent = overview.data.ticketCount;
-      document.querySelector('[data-stat-revenue]').textContent = Formatters.money(overview.data.revenueCents);
+      document.querySelector('[data-stat-tickets]').textContent = overview.data.ticketCount + overview.data.ballTicketCount;
+      document.querySelector('[data-stat-revenue]').textContent = Formatters.usd(overview.data.ticketRevenueCents);
+      document.querySelector('[data-stat-prizes]').textContent = Formatters.usd(overview.data.prizesDistributedCents);
     }
 
     var programsRes = await Api.adminListPrograms();
@@ -19,12 +19,12 @@
       body.innerHTML = programsRes.data.programs.map(function (p) {
         return '<tr><td>' + p.name + '<br><small class="muted">' + p.code + '</small></td>' +
           '<td><span class="status ' + STATUS_BADGE[p.status] + '">' + Formatters.programStatusLabel(p.status) + '</span></td>' +
-          '<td>' + p.matchCount + '/12</td><td>' + p.ticketCount + '</td><td>' + p.groupCount + '</td>' +
+          '<td>' + p.matchCount + '/12</td><td>' + p.ticketCount + '</td>' +
           '<td>' + Formatters.dateTimeLima(p.closeAt) + '</td>' +
           '<td><a class="btn btn-outline" style="padding:.4rem .7rem;font-size:.78rem" href="programas.html?id=' + p.id + '">Gestionar</a></td></tr>';
       }).join('');
     } else {
-      body.innerHTML = '<tr><td colspan="7" class="muted">Sin programas creados todavía.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="muted">Sin programas creados todavía.</td></tr>';
     }
 
     var auditRes = await Api.adminGetAuditLog(20);

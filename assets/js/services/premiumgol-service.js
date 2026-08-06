@@ -1,47 +1,50 @@
-/* PremiumLott — PremiumGolService: carrito de jugadas y checkout idempotente */
+/* PremiumLott — PremiumGolService: carrito de jugadas y checkout idempotente
+ * Un solo programa global compartido por todos los jugadores: el carrito se
+ * identifica únicamente por programId (ya no requiere grupo).
+ */
 (function (global) {
   var CART_PREFIX = 'premiumlott_cart_';
   var inFlightCheckouts = {};
 
-  function cartKey(groupId, programId) { return CART_PREFIX + groupId + '_' + programId; }
+  function cartKey(programId) { return CART_PREFIX + programId; }
 
-  function getCart(groupId, programId) {
-    try { return JSON.parse(sessionStorage.getItem(cartKey(groupId, programId)) || '[]'); }
+  function getCart(programId) {
+    try { return JSON.parse(sessionStorage.getItem(cartKey(programId)) || '[]'); }
     catch (e) { return []; }
   }
 
-  function saveCart(groupId, programId, cart) {
-    sessionStorage.setItem(cartKey(groupId, programId), JSON.stringify(cart));
+  function saveCart(programId, cart) {
+    sessionStorage.setItem(cartKey(programId), JSON.stringify(cart));
     return cart;
   }
 
-  function addToCart(groupId, programId, picks) {
-    var cart = getCart(groupId, programId);
+  function addToCart(programId, picks) {
+    var cart = getCart(programId);
     cart.push({ localId: Store.uuid(), picks: Object.assign({}, picks) });
-    return saveCart(groupId, programId, cart);
+    return saveCart(programId, cart);
   }
 
-  function updateInCart(groupId, programId, localId, picks) {
-    var cart = getCart(groupId, programId);
+  function updateInCart(programId, localId, picks) {
+    var cart = getCart(programId);
     var line = cart.find(function (c) { return c.localId === localId; });
     if (line) line.picks = Object.assign({}, picks);
-    return saveCart(groupId, programId, cart);
+    return saveCart(programId, cart);
   }
 
-  function duplicateInCart(groupId, programId, localId) {
-    var cart = getCart(groupId, programId);
+  function duplicateInCart(programId, localId) {
+    var cart = getCart(programId);
     var line = cart.find(function (c) { return c.localId === localId; });
     if (line) cart.push({ localId: Store.uuid(), picks: Object.assign({}, line.picks) });
-    return saveCart(groupId, programId, cart);
+    return saveCart(programId, cart);
   }
 
-  function removeFromCart(groupId, programId, localId) {
-    var cart = getCart(groupId, programId).filter(function (c) { return c.localId !== localId; });
-    return saveCart(groupId, programId, cart);
+  function removeFromCart(programId, localId) {
+    var cart = getCart(programId).filter(function (c) { return c.localId !== localId; });
+    return saveCart(programId, cart);
   }
 
-  function clearCart(groupId, programId) {
-    sessionStorage.removeItem(cartKey(groupId, programId));
+  function clearCart(programId) {
+    sessionStorage.removeItem(cartKey(programId));
   }
 
   function randomPicks(program) {
@@ -52,35 +55,32 @@
   }
 
   function cartTotals(cart, program) {
-    var cfg = Store.get().appConfig;
     var count = cart.length;
     return {
       count: count,
-      subtotalCents: count * cfg.ticketPriceCents,
-      poolCents: count * cfg.groupPoolContributionCents,
-      feeCents: count * cfg.houseFeeCents,
+      subtotalCents: count * program.ticketPriceCents,
       isComplete: cart.every(function (c) { return program.matches.every(function (m) { return !!c.picks[m.id]; }); })
     };
   }
 
-  function checkout(groupId, programId) {
-    var key = groupId + '_' + programId;
-    if (inFlightCheckouts[key]) return inFlightCheckouts[key];
+  function checkout(programId) {
+    if (inFlightCheckouts[programId]) return inFlightCheckouts[programId];
 
-    var cart = getCart(groupId, programId);
-    var idempotencyKey = sessionStorage.getItem('premiumlott_idem_' + key) || Store.uuid();
-    sessionStorage.setItem('premiumlott_idem_' + key, idempotencyKey);
+    var cart = getCart(programId);
+    var idemStorageKey = 'premiumlott_idem_' + programId;
+    var idempotencyKey = sessionStorage.getItem(idemStorageKey) || Store.uuid();
+    sessionStorage.setItem(idemStorageKey, idempotencyKey);
 
-    var promise = Api.purchaseTickets({ groupId: groupId, programId: programId, tickets: cart.map(function (c) { return { picks: c.picks }; }) }, idempotencyKey)
+    var promise = Api.purchaseTickets({ programId: programId, tickets: cart.map(function (c) { return { picks: c.picks }; }) }, idempotencyKey)
       .then(function (res) {
-        delete inFlightCheckouts[key];
+        delete inFlightCheckouts[programId];
         if (res.ok) {
-          clearCart(groupId, programId);
-          sessionStorage.removeItem('premiumlott_idem_' + key);
+          clearCart(programId);
+          sessionStorage.removeItem(idemStorageKey);
         }
         return res;
       });
-    inFlightCheckouts[key] = promise;
+    inFlightCheckouts[programId] = promise;
     return promise;
   }
 

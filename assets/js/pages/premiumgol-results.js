@@ -14,22 +14,18 @@
       return '<div class="match"><div><strong>' + m.home + '</strong> vs <strong>' + m.away + '</strong><div class="muted">' + Formatters.dateTimeLima(m.kickoffAt) + ' · ' + m.competition + '</div></div>' + badge + '</div>';
     }).join('');
 
-    var userRes = await Api.getCurrentUser();
-    var groupsCard = document.querySelector('[data-my-groups-card]');
-    if (userRes.ok && userRes.data.user) {
-      var groupsRes = await Api.getMyGroups();
-      var ticketsRes = await Api.getMyTickets({ programId: programId });
-      if (groupsRes.ok && ticketsRes.ok) {
-        var groupIdsWithTickets = Array.from(new Set(ticketsRes.data.tickets.map(function (t) { return t.groupId; })));
-        var relevantGroups = groupsRes.data.groups.filter(function (g) { return groupIdsWithTickets.indexOf(g.id) !== -1; });
-        if (relevantGroups.length) {
-          groupsCard.hidden = false;
-          document.querySelector('[data-my-groups-list]').innerHTML = relevantGroups.map(function (g) {
-            return '<div class="member-row"><span>' + g.name + '</span><a class="btn btn-outline" style="padding:.4rem .8rem;font-size:.78rem" href="../grupos/clasificacion.html?groupId=' + g.id + '&programId=' + programId + '">Ver clasificación</a></div>';
-          }).join('');
-        } else groupsCard.hidden = true;
-      }
-    } else groupsCard.hidden = true;
+    var lbRes = await Api.getProgramLeaderboard(programId);
+    var body = document.querySelector('[data-leaderboard-body]');
+    if (!lbRes.ok || !lbRes.data.rows.length) {
+      body.innerHTML = '<tr><td colspan="6" class="muted">Aún no hay tickets registrados en este programa.</td></tr>';
+      return;
+    }
+    body.innerHTML = lbRes.data.rows.map(function (row) {
+      return '<tr class="leaderboard-row"><td><span class="leaderboard-position ' + (row.position <= 3 ? 'top' : '') + '">' + row.position + '</span></td>' +
+        '<td>' + row.userLabel + '</td><td>' + row.code + '</td><td>' + row.hits + '/12</td>' +
+        '<td><span class="status ' + (row.isWinner ? 'ok' : 'pending') + '">' + row.status + '</span></td>' +
+        '<td>' + (row.isWinner ? '<strong style="color:var(--yellow)">' + Formatters.usd(row.prizeCents) + '</strong>' : '—') + '</td></tr>';
+    }).join('');
   }
 
   async function init() {

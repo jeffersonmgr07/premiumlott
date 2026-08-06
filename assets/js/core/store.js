@@ -1,6 +1,11 @@
 /* PremiumLott — Store v3
  * Fuente única de datos en localStorage. Sustituye premiumlott_state_v2.
  * Todo monto se guarda en céntimos (enteros). Formatear solo al mostrar.
+ *
+ * V3.1 — PremiumGol pasó de pozos por grupo a un pozo único global por
+ * programa (prizeMode y prizePoolCents ahora viven en Program). Las páginas
+ * de Grupos se retiraron de la interfaz; los métodos CRUD de grupos siguen
+ * en mock-api.js (dormidos, sin UI) por si se retoma la idea en otro juego.
  */
 (function (global) {
   var KEY = 'premiumlott_state_v3';
@@ -61,14 +66,29 @@
       otpExpiryMinutes: 10,
       loginMaxAttempts: 5,
       loginLockoutMinutes: 15,
-      ticketPriceCents: 500,
-      groupPoolContributionCents: 400,
-      houseFeeCents: 100,
-      minGroupCapacity: 2,
-      maxGroupCapacity: 50,
-      suggestedCapacities: [5, 10, 20, 50],
       timezone: 'America/Lima',
-      demoModeNotice: DEMO_MODE_NOTICE
+      demoModeNotice: DEMO_MODE_NOTICE,
+      // PremiumGol — pozo único global, jugadores internacionales, USD
+      premiumgol: {
+        currency: 'USD',
+        ticketPriceCents: 100,
+        defaultPrizePoolCents: 100000,
+        defaultPrizeMode: 'HIGHEST_SCORE'
+      },
+      // PremiumBall — cartilla estilo lotería clásica, USD
+      premiumball: {
+        currency: 'USD',
+        ticketPriceCents: 100,
+        numberMin: 1,
+        numberMax: 53,
+        picksCount: 6,
+        bolillapaMin: 1,
+        bolillapaMax: 10,
+        mainPrizeCents: 500000,
+        siOSiPrizeCents: 50000,
+        bolillapaPrizeCents: 50000,
+        siOSiMaxExtraNumbers: 10
+      }
     };
   }
 
@@ -76,6 +96,7 @@
     return {
       version: 3,
       appConfig: appConfig(),
+      premiumgolCarryCents: 0,
       users: [],
       sessions: [],
       emailVerifications: [],
@@ -92,6 +113,10 @@
       groupPools: [],
       settlements: [],
       payouts: [],
+      ballDraws: [],
+      ballTickets: [],
+      ballSettlements: [],
+      ballPayouts: [],
       auditLog: [],
       legacyTickets: [],
       legacyMovements: []
@@ -118,6 +143,10 @@
     if (!wallet) {
       // El saldo siempre nace en cero: cualquier saldo inicial se acredita
       // explícitamente vía ledgerEntry para que el libro mayor cuadre siempre.
+      // La billetera demo es agnóstica de moneda (un solo balance en céntimos);
+      // el resto del sitio la muestra en soles (S/) y PremiumGol/PremiumBall en
+      // dólares (US$), ya que en esta fase no hay pasarela de pago real ni
+      // conversión real entre monedas.
       wallet = { id: uuid(), userId: userId, balanceCents: 0, currency: 'PEN', createdAt: nowIso() };
       state.wallets.push(wallet);
     }
@@ -288,15 +317,18 @@
     var u3 = demoUser('jose.demo@premiumlott.demo', 'José', 'Torres', '71234563');
     var u4 = demoUser('lucia.demo@premiumlott.demo', 'Lucía', 'Vargas', '71234564');
     var u5 = demoUser('ana.demo@premiumlott.demo', 'Ana', 'Quispe', '71234565');
+    var demoPlayers = [u1, u2, u3, u4, u5];
 
-    function buildProgram(code, name, status, offsetDaysOpen, offsetDaysClose, resultsPattern) {
+    function buildProgram(code, name, status, offsetDaysOpen, offsetDaysClose, resultsPattern, prizeMode, prizePoolCents) {
       var programId = uuid();
       var openAt = new Date(Date.now() + offsetDaysOpen * 86400000);
       var closeAt = new Date(Date.now() + offsetDaysClose * 86400000);
       var program = {
         id: programId, code: code, name: name, status: status, openAt: openAt.toISOString(), closeAt: closeAt.toISOString(),
         timezone: cfg.timezone, estimatedSettlementAt: new Date(closeAt.getTime() + 3 * 3600000).toISOString(),
-        ticketPriceCents: cfg.ticketPriceCents, voidPolicy: 'VOID_COUNTS_AS_HIT', settledAt: null, settlementIdempotencyKey: null,
+        ticketPriceCents: cfg.premiumgol.ticketPriceCents, currency: cfg.premiumgol.currency, voidPolicy: 'VOID_COUNTS_AS_HIT',
+        prizeMode: prizeMode || cfg.premiumgol.defaultPrizeMode, prizePoolCents: prizePoolCents != null ? prizePoolCents : cfg.premiumgol.defaultPrizePoolCents,
+        progressiveCarryInCents: 0, settledAt: null, settlementIdempotencyKey: null,
         createdAt: nowIso(), cancelledAt: null, cancelReason: null
       };
       state.programs.push(program);
@@ -322,8 +354,8 @@
       return { program: program, matchIds: matchIds };
     }
 
-    // Programa abierto (jugable en el demo)
-    var openProgram = buildProgram('PG-2026-W' + String(new Date().getWeek ? new Date().getWeek() : 32) + '-A', 'PremiumGol · Programa semanal', 'open', -1, 3, null);
+    // Programa abierto (jugable en el demo) — pozo fijo de US$ 1,000
+    var openProgram = buildProgram('PG-2026-W' + String(new Date().getWeek ? new Date().getWeek() : 32) + '-A', 'PremiumGol · Programa semanal', 'open', -1, 3, null, 'HIGHEST_SCORE', 100000);
 
     // Programa liquidado (para mostrar historial, empate y caso 12/12)
     var settledResults = ['L', 'E', 'V', 'L', 'L', 'E', 'V', 'L', 'E', 'V', 'L', 'V'];
@@ -331,104 +363,97 @@
     // más abajo sea la que genere el registro de settlement, los payouts y
     // los créditos de premio; si quedara marcado 'settled' de entrada,
     // Settlement.settleProgram lo rechazaría por PROGRAM_ALREADY_SETTLED.
-    var settledProgram = buildProgram('PG-2026-W' + (new Date().getWeek ? new Date().getWeek() - 1 : 31) + '-A', 'PremiumGol · Programa anterior', 'results_pending', -10, -7, settledResults);
+    var settledProgram = buildProgram('PG-2026-W' + (new Date().getWeek ? new Date().getWeek() - 1 : 31) + '-A', 'PremiumGol · Programa anterior', 'results_pending', -10, -7, settledResults, 'HIGHEST_SCORE', 100000);
 
-    function createGroup(name, description, capacity, prizeMode, ownerId) {
-      var groupId = uuid();
-      var group = {
-        id: groupId, name: name, description: description, avatarInitials: name.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase(),
-        capacity: capacity, prizeMode: prizeMode, privacy: 'CODE', code: shortCode(6), inviteLink: null, ownerId: ownerId,
-        status: 'ACTIVE', joinLocked: false, modeLockedAt: null, progressivePoolCents: 0, rulesAcceptedVersion: 1, createdAt: nowIso()
-      };
-      group.inviteLink = 'grupos/unirse.html?code=' + group.code;
-      state.groups.push(group);
-      state.groupMembers.push({ id: uuid(), groupId: groupId, userId: ownerId, role: 'OWNER', status: 'ACTIVE', joinedAt: nowIso(), removedAt: null });
-      return group;
-    }
-
-    function addMember(group, userId) {
-      state.groupMembers.push({ id: uuid(), groupId: group.id, userId: userId, role: 'MEMBER', status: 'ACTIVE', joinedAt: nowIso(), removedAt: null });
-    }
-
-    var groupA = createGroup('Amigos del Barrio', 'Grupo clásico de pronósticos entre amigos.', 10, 'HIGHEST_SCORE', u1.id);
-    addMember(groupA, u2.id); addMember(groupA, u3.id);
-
-    var groupB = createGroup('Los Acumuladores', 'Vamos por el pozo progresivo de los 12 aciertos.', 20, 'PERFECT_12', u2.id);
-    addMember(groupB, u1.id); addMember(groupB, u4.id); addMember(groupB, u5.id);
-
-    var groupC = createGroup('Oficina Premium', 'Grupo mixto: premio semanal + acumulado.', 50, 'MIXED', u3.id);
-    addMember(groupC, u1.id); addMember(groupC, u2.id); addMember(groupC, u4.id);
-
-    function purchaseDemoTicket(user, group, programInfo, pickPattern, idemKey) {
-      var cfg2 = state.appConfig;
+    function purchaseDemoTicket(user, programInfo, pickPattern, idemKey) {
       var picks = {};
       programInfo.matchIds.forEach(function (mid, idx) { picks[mid] = pickPattern[idx]; });
       var ticket = {
-        id: uuid(), code: makeCode('PLG'), userId: user.id, groupId: group.id, programId: programInfo.program.id,
-        picks: picks, priceCents: cfg2.ticketPriceCents, poolContributionCents: cfg2.groupPoolContributionCents,
-        houseFeeCents: cfg2.houseFeeCents, status: 'ACTIVE', purchasedAt: nowIso(), idempotencyKey: idemKey || uuid(),
-        hits: null, isWinner: false, prizeCents: 0, settledAt: null
+        id: uuid(), code: makeCode('PLG'), userId: user.id, programId: programInfo.program.id,
+        picks: picks, priceCents: programInfo.program.ticketPriceCents, status: 'ACTIVE', purchasedAt: nowIso(),
+        idempotencyKey: idemKey || uuid(), hits: null, isWinner: false, prizeCents: 0, settledAt: null
       };
       state.tickets.push(ticket);
       Object.keys(picks).forEach(function (mid) {
         state.ticketPicks.push({ id: uuid(), ticketId: ticket.id, matchId: mid, pick: picks[mid] });
       });
-      ledgerEntry(state, user.id, 'TICKET_PURCHASE', -cfg2.ticketPriceCents, { referenceType: 'ticket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code });
-      applyPoolContribution(state, group, programInfo.program, ticket);
+      ledgerEntry(state, user.id, 'TICKET_PURCHASE', -ticket.priceCents, { referenceType: 'ticket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code });
       return ticket;
     }
 
-    // Tickets del programa liquidado (para caso de empate y caso 12/12)
+    // Tickets del programa liquidado (caso de empate + caso 12/12)
     var perfect = settledResults.slice();
     var near1 = settledResults.slice(); near1[11] = near1[11] === 'V' ? 'L' : 'V';
     var near2 = settledResults.slice(); near2[10] = near2[10] === 'L' ? 'E' : 'L';
     var mid = settledResults.slice(); mid[3] = 'E'; mid[5] = 'V'; mid[8] = 'L';
 
-    purchaseDemoTicket(u1, groupA, settledProgram, near1, 'seed-a-1');
-    purchaseDemoTicket(u2, groupA, settledProgram, near1, 'seed-a-2');
-    purchaseDemoTicket(u3, groupA, settledProgram, mid, 'seed-a-3');
+    purchaseDemoTicket(u1, settledProgram, near1, 'seed-a-1');
+    purchaseDemoTicket(u2, settledProgram, near1, 'seed-a-2');
+    purchaseDemoTicket(u3, settledProgram, mid, 'seed-a-3');
+    purchaseDemoTicket(u4, settledProgram, perfect, 'seed-a-4');
+    purchaseDemoTicket(u5, settledProgram, mid, 'seed-a-5');
 
-    purchaseDemoTicket(u1, groupB, settledProgram, near2, 'seed-b-1');
-    purchaseDemoTicket(u4, groupB, settledProgram, perfect, 'seed-b-2');
-    purchaseDemoTicket(u5, groupB, settledProgram, mid, 'seed-b-3');
-
-    purchaseDemoTicket(u1, groupC, settledProgram, near1, 'seed-c-1');
-    purchaseDemoTicket(u2, groupC, settledProgram, perfect, 'seed-c-2');
-    purchaseDemoTicket(u4, groupC, settledProgram, mid, 'seed-c-3');
-
-    // Un par de tickets abiertos para poder ver "Mis jugadas" antes del cierre
-    purchaseDemoTicket(u1, groupA, openProgram, near1, 'seed-open-1');
+    // Un ticket abierto para poder ver "Mis jugadas" antes del cierre
+    purchaseDemoTicket(u1, openProgram, near1, 'seed-open-1');
 
     var seedSettlement = global.Settlement.settleProgram(state, settledProgram.program.id, { actorId: admin.id, actorRole: 'admin' });
     if (!seedSettlement.ok) {
       throw new Error('No se pudo liquidar el programa de demostración: ' + seedSettlement.error.message);
     }
 
+    seedBallDemoData(state, admin, demoPlayers);
+
     pushAudit(state, { action: 'DEMO_DATA_SEEDED', actorRole: 'system' });
     return state;
   }
 
-  function applyPoolContribution(state, group, program, ticket) {
-    var pool = state.groupPools.find(function (p) { return p.groupId === group.id && p.programId === program.id; });
-    if (!pool) {
-      pool = { id: uuid(), groupId: group.id, programId: program.id, ticketCount: 0, contributionTotalCents: 0, weeklyPoolCents: 0, progressiveContributionCents: 0 };
-      state.groupPools.push(pool);
+  function seedBallDemoData(state, admin, players) {
+    var cfg = state.appConfig.premiumball;
+
+    function buildDraw(name, status, offsetDaysClose, drawnNumbers, siOSiExtra, bolillapaNumber) {
+      var draw = {
+        id: uuid(), code: makeCode('PB'), name: name, status: status,
+        openAt: nowIso(), closeAt: new Date(Date.now() + offsetDaysClose * 86400000).toISOString(),
+        timezone: state.appConfig.timezone, ticketPriceCents: cfg.ticketPriceCents, currency: cfg.currency,
+        numberMin: cfg.numberMin, numberMax: cfg.numberMax, picksCount: cfg.picksCount,
+        bolillapaMin: cfg.bolillapaMin, bolillapaMax: cfg.bolillapaMax,
+        mainPrizeCents: cfg.mainPrizeCents, siOSiPrizeCents: cfg.siOSiPrizeCents, bolillapaPrizeCents: cfg.bolillapaPrizeCents,
+        drawnNumbers: drawnNumbers || [], siOSiExtraNumbers: siOSiExtra || [], bolillapaNumber: bolillapaNumber != null ? bolillapaNumber : null,
+        settledAt: null, settlementIdempotencyKey: null, createdAt: nowIso(), cancelledAt: null, cancelReason: null
+      };
+      state.ballDraws.push(draw);
+      return draw;
     }
-    pool.ticketCount += 1;
-    pool.contributionTotalCents += ticket.poolContributionCents;
-    if (group.prizeMode === 'HIGHEST_SCORE') {
-      pool.weeklyPoolCents += ticket.poolContributionCents;
-    } else if (group.prizeMode === 'PERFECT_12') {
-      pool.progressiveContributionCents += ticket.poolContributionCents;
-      group.progressivePoolCents += ticket.poolContributionCents;
-    } else if (group.prizeMode === 'MIXED') {
-      var half = Math.round(ticket.poolContributionCents / 2);
-      pool.weeklyPoolCents += half;
-      pool.progressiveContributionCents += (ticket.poolContributionCents - half);
-      group.progressivePoolCents += (ticket.poolContributionCents - half);
+
+    var openDraw = buildDraw('PremiumBall · Sorteo semanal', 'open', 4, [], [], null);
+
+    var settledDraw = buildDraw('PremiumBall · Sorteo anterior', 'results_pending', -3, [4, 12, 19, 27, 33, 48], [], 7);
+
+    function purchaseBallTicket(user, draw, numbers, bolillapaNumber, idemKey) {
+      var ticket = {
+        id: uuid(), code: makeCode('PLB'), userId: user.id, drawId: draw.id, numbers: numbers.slice().sort(function (a, b) { return a - b; }),
+        bolillapaNumber: bolillapaNumber != null ? bolillapaNumber : null, priceCents: draw.ticketPriceCents, status: 'ACTIVE',
+        purchasedAt: nowIso(), idempotencyKey: idemKey || uuid(), hits: null, isMainWinner: false, isSiOSiWinner: false,
+        isBolillapaWinner: false, prizeCents: 0, settledAt: null
+      };
+      state.ballTickets.push(ticket);
+      ledgerEntry(state, user.id, 'TICKET_PURCHASE', -ticket.priceCents, { referenceType: 'ballTicket', referenceId: ticket.id, description: 'Compra de ticket ' + ticket.code });
+      return ticket;
     }
-    if (!group.modeLockedAt) group.modeLockedAt = nowIso();
-    return pool;
+
+    // Ticket ganador exacto (6/6) para demostrar el premio mayor
+    purchaseBallTicket(players[0], settledDraw, [4, 12, 19, 27, 33, 48], 7, 'seed-ball-1');
+    // Ticket con 5/6 + bolillapa correcta
+    purchaseBallTicket(players[1], settledDraw, [4, 12, 19, 27, 33, 50], 7, 'seed-ball-2');
+    // Ticket con pocos aciertos
+    purchaseBallTicket(players[2], settledDraw, [1, 2, 3, 4, 5, 6], 9, 'seed-ball-3');
+    // Ticket abierto para ver en "Mis jugadas"
+    purchaseBallTicket(players[0], openDraw, [5, 10, 15, 20, 25, 30], 3, 'seed-ball-open-1');
+
+    var ballSettlement = global.Settlement.settleBallDraw(state, settledDraw.id, { actorId: admin.id, actorRole: 'admin' });
+    if (!ballSettlement.ok) {
+      throw new Error('No se pudo liquidar el sorteo de PremiumBall de demostración: ' + ballSettlement.error.message);
+    }
   }
 
   // ---------- API pública del Store ----------
@@ -451,7 +476,14 @@
     if (_cache) return _cache;
     var existing = loadRaw();
     if (existing && existing.version === 3) {
-      _cache = existing;
+      // Un estado v3 guardado por una versión anterior de esta fase puede no
+      // traer todavía las colecciones/campos de PremiumBall ni el pozo
+      // progresivo de PremiumGol (se agregaron sin subir el número de
+      // versión). seedProgramsIfMissing rellena lo que falte sin tocar
+      // usuarios, billeteras ni sesiones ya existentes.
+      existing = seedProgramsIfMissing(existing);
+      if (existing.premiumgolCarryCents == null) existing.premiumgolCarryCents = 0;
+      persist(existing);
       return _cache;
     }
     var v2Raw = localStorage.getItem(OLD_KEY_V2);
@@ -471,26 +503,50 @@
   }
 
   function seedProgramsIfMissing(state) {
-    if (state.programs.length) return state;
-    // Un usuario migrado no trae programas de PremiumGol nuevos; se agregan igualmente
-    // para que la experiencia de esta fase esté completa.
+    if (state.programs.length && state.ballDraws && state.ballDraws.length) return state;
+    // Un usuario migrado no trae programas de PremiumGol/PremiumBall nuevos;
+    // se agregan igualmente para que la experiencia de esta fase esté completa.
     var seeded = seedDemoData(defaultState());
+
+    // Si un jugador de muestra (mismo email) ya existía en este navegador,
+    // los tickets/programas recién generados se reasignan a su id real en
+    // vez de quedar huérfanos con el id nuevo que generó este seed.
+    var idRemap = {};
+    seeded.users.forEach(function (u) {
+      var existingUser = state.users.find(function (x) { return x.email === u.email; });
+      if (existingUser) idRemap[u.id] = existingUser.id;
+    });
+    var remappedOldIds = Object.keys(idRemap);
+    if (remappedOldIds.length) {
+      var seededJson = JSON.stringify(seeded);
+      remappedOldIds.forEach(function (oldId) { seededJson = seededJson.split(oldId).join(idRemap[oldId]); });
+      seeded = JSON.parse(seededJson);
+    }
+
     state.appConfig = seeded.appConfig;
-    state.groups = seeded.groups;
-    state.groupMembers = seeded.groupMembers;
-    state.groupInvitations = seeded.groupInvitations;
     state.programs = seeded.programs;
     state.matches = seeded.matches;
     state.tickets = seeded.tickets;
     state.ticketPicks = seeded.ticketPicks;
-    state.groupPools = seeded.groupPools;
     state.settlements = seeded.settlements;
     state.payouts = seeded.payouts;
+    state.ballDraws = seeded.ballDraws;
+    state.ballTickets = seeded.ballTickets;
+    state.ballSettlements = seeded.ballSettlements;
+    state.ballPayouts = seeded.ballPayouts;
     seeded.users.forEach(function (u) { if (!state.users.find(function (x) { return x.email === u.email; })) state.users.push(u); });
     seeded.wallets.forEach(function (w) {
       if (!state.wallets.find(function (x) { return x.userId === w.userId; })) state.wallets.push(w);
     });
-    seeded.walletLedger.forEach(function (l) { if (!state.walletLedger.find(function (x) { return x.id === l.id; })) state.walletLedger.push(l); });
+    // Los movimientos de muestra (recarga de bienvenida, compras de tickets)
+    // solo se agregan para billeteras nuevas: a un usuario que ya existía no
+    // se le insertan movimientos ficticios que no cuadrarían con su saldo real.
+    var remappedUserIds = {};
+    remappedOldIds.forEach(function (oldId) { remappedUserIds[idRemap[oldId]] = true; });
+    seeded.walletLedger.forEach(function (l) {
+      if (remappedUserIds[l.userId]) return;
+      if (!state.walletLedger.find(function (x) { return x.id === l.id; })) state.walletLedger.push(l);
+    });
     return state;
   }
 
@@ -518,6 +574,7 @@
       state.ticketPicks = state.ticketPicks.filter(function (p) {
         return state.tickets.some(function (t) { return t.id === p.ticketId; });
       });
+      state.ballTickets = state.ballTickets.filter(function (t) { return t.userId !== userId; });
       var resetBalance = userId === GUEST_ID ? 12500 : 10000;
       ledgerEntry(state, userId, 'DEMO_TOPUP', resetBalance, { description: 'Reinicio de cuenta demo' });
       pushAudit(state, { actorId: userId, actorRole: 'user', action: 'DEMO_ACCOUNT_RESET', entityType: 'user', entityId: userId });
@@ -528,7 +585,7 @@
     KEY: KEY, GUEST_ID: GUEST_ID, DEMO_MODE_NOTICE: DEMO_MODE_NOTICE,
     uuid: uuid, nowIso: nowIso, clone: clone, demoHash: demoHash, makeCode: makeCode, shortCode: shortCode,
     get: get, save: save, update: update, ensureWallet: ensureWallet, ledgerEntry: ledgerEntry, pushAudit: pushAudit,
-    applyPoolContribution: applyPoolContribution, resetAllDemoData: resetAllDemoData, resetUserDemoAccount: resetUserDemoAccount,
+    resetAllDemoData: resetAllDemoData, resetUserDemoAccount: resetUserDemoAccount,
     appConfig: appConfig
   };
 })(window);

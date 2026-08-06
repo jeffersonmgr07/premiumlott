@@ -10,6 +10,20 @@
     return (n >= 0 ? '+ ' : '- ') + money(Math.abs(n));
   }
 
+  // PremiumGol y PremiumBall están orientados a jugadores internacionales y
+  // se muestran en dólares. La billetera demo es agnóstica de moneda (un
+  // único saldo en céntimos); en producción real esto requeriría manejo de
+  // multi-moneda o conversión real, fuera del alcance de este prototipo.
+  function usd(cents) {
+    var value = Number(cents || 0) / 100;
+    return 'US$ ' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function usdSigned(cents) {
+    var n = Number(cents || 0);
+    return (n >= 0 ? '+ ' : '- ') + usd(Math.abs(n));
+  }
+
   function dateLima(iso, opts) {
     if (!iso) return '—';
     var d = new Date(iso);
@@ -86,7 +100,7 @@
   }
 
   global.Formatters = {
-    money: money, moneySigned: moneySigned, dateLima: dateLima, dateTimeLima: dateTimeLima,
+    money: money, moneySigned: moneySigned, usd: usd, usdSigned: usdSigned, dateLima: dateLima, dateTimeLima: dateTimeLima,
     maskDni: maskDni, maskEmail: maskEmail, maskUserLabel: maskUserLabel, initials: initials,
     programStatusLabel: programStatusLabel, prizeModeLabel: prizeModeLabel, pickLabel: pickLabel,
     invitationStatusLabel: invitationStatusLabel, ledgerTypeLabel: ledgerTypeLabel
