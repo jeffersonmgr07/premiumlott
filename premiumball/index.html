@@ -1,16 +1,63 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PremiumBall · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body data-game-name="PremiumBall"><div class="page-wrapper">
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Jugar PremiumBall · PremiumLott</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/main.css"></head><body><div class="page-wrapper">
 <div class="demo-banner" data-demo-banner></div>
 <header data-site-header></header>
-<main class="main"><section class="section"><div class="empty-state">
-  <span class="game-icon" style="width:72px;height:72px"><img src="../assets/img/logos/Logo PremiumBall.png" alt=""></span>
-  <span class="pill">Próximamente</span>
-  <h1 class="title">PremiumBall</h1>
-  <p class="muted" style="max-width:460px">Elige tus números y participa por el gran pozo acumulado. Estamos preparando esta experiencia — vuelve pronto.</p>
-  <div class="section-actions">
-    <button class="btn btn-primary" type="button" data-notify-btn>Avísame cuando esté listo</button>
-    <a class="btn btn-outline" href="../premiumgol/jugar.html">Jugar PremiumGol mientras tanto</a>
-  </div>
-</div></section></main>
+<main class="main" data-loading><p class="muted">Cargando sorteo…</p></main>
+<main class="main" data-content hidden>
+<section class="section" style="padding-top:1.2rem">
+
+<div class="pg-strip">
+  <div class="pg-strip-title"><strong>PremiumBall</strong><span data-draw-name>Sorteo semanal</span></div>
+  <div class="pg-strip-metric"><span>Premio mayor</span><strong data-pool-label>—</strong></div>
+  <div class="pg-strip-metric"><span>Cierra en</span><strong data-countdown>—</strong></div>
+</div>
+
+<div class="wizard-steps"><span data-step="1" class="active">Paso 1 · Elige tus números</span><span data-step="2">Paso 2 · Finalizar tu compra</span></div>
+
+<div class="wc-layout">
+<div class="wc-main-flow">
+  <article class="card">
+    <div class="ticket-tabs" data-ticket-tabs></div>
+    <div class="builder-toolbar">
+      <div><strong data-picks-count>0</strong>/6 números · Bolillapa <strong data-bolillapa-picked>—</strong></div>
+      <div class="cart-line-actions">
+        <button type="button" data-random-btn>Azar</button>
+        <button type="button" data-clear-btn>Limpiar</button>
+      </div>
+    </div>
+    <div class="picks-progress" style="margin:.6rem 0"><i data-progress-bar style="width:0%"></i></div>
+
+    <div class="ball-section-title"><strong>Elige 6 números</strong><span data-number-range>1 al 53</span></div>
+    <div class="number-grid" data-number-grid role="list" aria-label="Números disponibles"></div>
+
+    <div class="ball-section-title"><strong>Bolillapa</strong><span data-bolillapa-range>1 al 10</span></div>
+    <p class="mini muted" style="margin-bottom:.5rem">Tu comodín para ganar el premio Bolillapa si aciertas 5 de 6 números.</p>
+    <div class="bolillapa-grid" data-bolillapa-grid role="list" aria-label="Bolillapa"></div>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:1.2rem" data-add-cart-btn>Guardar jugada</button>
+    <p class="mini muted" style="margin-top:.5rem">Cada ticket cuesta <span data-ticket-price>US$ 1.00</span>. <a href="../pages/legales/reglas-premiumball.html" target="_blank">Ver reglas</a></p>
+  </article>
+</div>
+
+<aside class="wc-slip sticky-summary">
+  <article class="card">
+    <h3>Resumen de compra</h3>
+    <div class="cart-summary-row"><span>Tickets guardados</span><strong data-cart-count>0</strong></div>
+    <div class="cart-summary-row"><span>Subtotal</span><strong data-cart-subtotal>US$ 0.00</strong></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:.8rem" data-confirm-btn disabled>Registrar jugadas</button>
+    <div class="payment-methods-note"><span class="pill">PayPal</span> Pronto podrás recargar y cobrar directo con PayPal.</div>
+    <p class="mini">Modo de prueba — no se cobra dinero real.</p>
+  </article>
+  <article class="card" style="margin-top:1rem">
+    <h3 style="font-size:.95rem">Cómo se gana</h3>
+    <p class="mini muted" style="margin-top:.4rem"><strong style="color:var(--yellow)">Premio mayor:</strong> acierta los 6 números.</p>
+    <p class="mini muted" style="margin-top:.4rem"><strong style="color:var(--yellow)">Sí o Sí:</strong> si nadie hace 6/6, se sortean bolillas extra hasta encontrar un ganador.</p>
+    <p class="mini muted" style="margin-top:.4rem"><strong style="color:var(--yellow)">Bolillapa:</strong> acierta 5 de 6 números y tu Bolillapa.</p>
+  </article>
+</aside>
+</div>
+</section>
+</main>
+<div class="mobile-cart-bar" data-mobile-bar hidden><span><strong data-mobile-count>0</strong> tickets · <span data-mobile-total>US$ 0.00</span></span><button class="btn btn-primary" data-mobile-confirm>Registrar</button></div>
 <footer data-site-footer></footer>
 </div>
 <script src="../assets/js/core/store.js"></script>
@@ -23,10 +70,10 @@
 <script src="../assets/js/services/api-client.js"></script>
 <script src="../assets/js/services/auth-service.js"></script>
 <script src="../assets/js/services/wallet-service.js"></script>
-<script src="../assets/js/services/group-service.js"></script>
-<script src="../assets/js/services/premiumgol-service.js"></script>
+
+<script src="../assets/js/services/premiumball-service.js"></script>
 <script src="../assets/js/services/admin-service.js"></script>
 <script src="../assets/js/app.js"></script>
 <script src="../assets/js/i18n.js"></script>
-<script src="../assets/js/pages/coming-soon.js"></script>
+<script src="../assets/js/pages/premiumball-builder.js"></script>
 </body></html>

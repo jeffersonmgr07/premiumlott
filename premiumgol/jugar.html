@@ -7,18 +7,8 @@
 
 <div class="pg-strip">
   <div class="pg-strip-title"><strong>PremiumGol</strong><span data-program-name>Programa semanal</span></div>
-  <div class="pg-strip-metric"><span>Pozo del grupo</span><strong data-pool-label>—</strong></div>
+  <div class="pg-strip-metric"><span>Pozo</span><strong data-pool-label>—</strong></div>
   <div class="pg-strip-metric"><span>Cierra en</span><strong data-countdown>—</strong></div>
-</div>
-
-<div class="card compact" data-group-picker style="margin-bottom:1rem">
-  <div class="group-picker-row">
-    <div class="field" style="margin:0"><label for="group-select">Grupo</label>
-      <select id="group-select" data-group-select><option value="">Selecciona un grupo…</option></select>
-    </div>
-    <div class="group-picker-actions" data-group-picker-actions></div>
-  </div>
-  <p class="mini muted" data-group-hint>Puedes armar tus pronósticos primero y elegir el grupo antes de confirmar.</p>
 </div>
 
 <div class="wizard-steps"><span data-step="1" class="active">Paso 1 · Elige tu jugada</span><span data-step="2">Paso 2 · Finalizar tu compra</span></div>
@@ -35,9 +25,9 @@
       </div>
     </div>
     <div class="picks-progress" style="margin:.6rem 0"><i data-progress-bar style="width:0%"></i></div>
-    <div class="pick-list" data-match-list role="list" aria-label="Partidos del programa"></div>
+    <div class="match-ticket-grid" data-match-list role="list" aria-label="Partidos del programa"></div>
     <button class="btn btn-primary" style="width:100%;margin-top:1rem" data-add-cart-btn>Guardar jugada</button>
-    <p class="mini muted" style="margin-top:.5rem">Cada ticket cuesta S/ 5.00. <a href="../pages/legales/reglas-premiumgol.html" target="_blank">Ver reglas</a></p>
+    <p class="mini muted" style="margin-top:.5rem">Cada ticket cuesta <span data-ticket-price>US$ 1.00</span>. <a href="../pages/legales/reglas-premiumgol.html" target="_blank">Ver reglas</a></p>
   </article>
 </div>
 
@@ -45,17 +35,16 @@
   <article class="card">
     <h3>Resumen de compra</h3>
     <div class="cart-summary-row"><span>Tickets guardados</span><strong data-cart-count>0</strong></div>
-    <div class="cart-summary-row"><span>Subtotal</span><strong data-cart-subtotal>S/ 0.00</strong></div>
-    <div class="cart-summary-row"><span>Aporte al pozo del grupo</span><strong data-cart-pool>S/ 0.00</strong></div>
-    <div class="cart-summary-row"><span>Comisión de la plataforma</span><strong data-cart-fee>S/ 0.00</strong></div>
+    <div class="cart-summary-row"><span>Subtotal</span><strong data-cart-subtotal>US$ 0.00</strong></div>
     <button class="btn btn-primary" style="width:100%;margin-top:.8rem" data-confirm-btn disabled>Registrar jugadas</button>
+    <div class="payment-methods-note"><span class="pill">PayPal</span> Pronto podrás recargar y cobrar directo con PayPal.</div>
     <p class="mini">Modo de prueba — no se cobra dinero real.</p>
   </article>
 </aside>
 </div>
 </section>
 </main>
-<div class="mobile-cart-bar" data-mobile-bar hidden><span><strong data-mobile-count>0</strong> tickets · <span data-mobile-total>S/ 0.00</span></span><button class="btn btn-primary" data-mobile-confirm>Registrar</button></div>
+<div class="mobile-cart-bar" data-mobile-bar hidden><span><strong data-mobile-count>0</strong> tickets · <span data-mobile-total>US$ 0.00</span></span><button class="btn btn-primary" data-mobile-confirm>Registrar</button></div>
 <footer data-site-footer></footer>
 </div>
 <script src="../assets/js/core/store.js"></script>
@@ -68,7 +57,7 @@
 <script src="../assets/js/services/api-client.js"></script>
 <script src="../assets/js/services/auth-service.js"></script>
 <script src="../assets/js/services/wallet-service.js"></script>
-<script src="../assets/js/services/group-service.js"></script>
+
 <script src="../assets/js/services/premiumgol-service.js"></script>
 <script src="../assets/js/services/admin-service.js"></script>
 <script src="../assets/js/app.js"></script>
