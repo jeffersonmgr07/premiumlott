@@ -32,7 +32,8 @@
       '</nav>' +
       '<div class="header-actions">' +
       '<select class="lang-select" data-lang-select><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option><option value="fr">FR</option><option value="de">DE</option><option value="it">IT</option><option value="zh">中文</option><option value="ja">日本語</option></select>' +
-      '<a class="btn btn-primary" href="' + p + 'login.html" data-i18n="nav.login" data-account-link>Iniciar sesión</a>' +
+      '<a class="btn btn-outline hide-sm" href="' + p + 'login.html" data-i18n="nav.login" data-login-link>Ingresa</a>' +
+      '<a class="btn btn-primary" href="' + p + 'registro.html" data-i18n="nav.register" data-register-link>Regístrate</a>' +
       '</div>';
 
     var toggle = host.querySelector('[data-mobile-toggle]');
@@ -44,14 +45,16 @@
 
   function applyAccountLink(host, prefix) {
     var user = MockApi.getCurrentUserSync();
-    var link = host.querySelector('[data-account-link]');
-    if (!link) return;
+    var loginLink = host.querySelector('[data-login-link]');
+    var registerLink = host.querySelector('[data-register-link]');
+    if (!loginLink || !registerLink) return;
     if (user) {
-      // Se retira el data-i18n para que i18n.js no revierta el texto a
-      // "Iniciar sesión" al aplicar traducciones o cambiar de idioma.
-      link.removeAttribute('data-i18n');
-      link.textContent = 'Mi cuenta';
-      link.setAttribute('href', prefix + 'dashboard.html');
+      loginLink.hidden = true;
+      // Se retira el data-i18n para que i18n.js no revierta el texto al aplicar traducciones.
+      registerLink.removeAttribute('data-i18n');
+      registerLink.classList.remove('hide-sm');
+      registerLink.textContent = 'Mi cuenta';
+      registerLink.setAttribute('href', prefix + 'dashboard.html');
     }
   }
 

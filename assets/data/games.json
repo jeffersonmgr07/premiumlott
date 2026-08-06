@@ -1,40 +1,47 @@
 {
+  "_readme": "Catálogo de referencia de juegos. No se consume por fetch en esta fase (los grids de juegos están inline en index.html); se mantiene como documentación de las rutas por carpeta de cada juego.",
   "games": [
     {
       "id": "premiumgol",
       "title": "PremiumGol",
       "description": "Pronostica partidos y participa por pozos semanales.",
-      "url": "juegos/premiumgol.html"
+      "url": "premiumgol/jugar.html",
+      "status": "active"
     },
     {
       "id": "premiumball",
       "title": "PremiumBall",
       "description": "Elige tus números y participa por el gran pozo acumulado.",
-      "url": "juegos/premiumball.html"
-    },
-    {
-      "id": "mundial",
-      "title": "Worldgroup Premium",
-      "description": "Predice clasificados, llaves y campeón.",
-      "url": "juegos/mundial.html"
+      "url": "premiumball/index.html",
+      "status": "coming_soon"
     },
     {
       "id": "megalott",
       "title": "MegaLott",
       "description": "Sorteos especiales con grandes acumulados.",
-      "url": "#"
+      "url": "megalott/index.html",
+      "status": "coming_soon"
     },
     {
       "id": "bingo",
       "title": "Bingo Premium",
       "description": "Cartillas, rondas y premios instantáneos.",
-      "url": "#"
+      "url": "bingopremium/index.html",
+      "status": "coming_soon"
     },
     {
       "id": "raspaditas",
       "title": "Raspaditas Premium",
       "description": "Participa al instante y descubre premios al momento.",
-      "url": "#"
+      "url": "raspaditaspremium/index.html",
+      "status": "coming_soon"
+    },
+    {
+      "id": "mundial",
+      "title": "Worldgroup Premium",
+      "description": "Predice clasificados, llaves y campeón. Disponible por enlace directo, fuera de la navegación principal.",
+      "url": "juegos/mundial.html",
+      "status": "unlisted"
     }
   ]
 }

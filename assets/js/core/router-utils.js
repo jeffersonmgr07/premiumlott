@@ -1,6 +1,6 @@
 /* PremiumLott — Utilidades de rutas relativas compatibles con GitHub Pages */
 (function (global) {
-  var ONE_LEVEL = ['/juegos/', '/premiumgol/', '/grupos/', '/admin/'];
+  var ONE_LEVEL = ['/juegos/', '/premiumgol/', '/grupos/', '/admin/', '/premiumball/', '/bingopremium/', '/raspaditaspremium/', '/megalott/'];
 
   function pathPrefix() {
     var path = location.pathname;

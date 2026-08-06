@@ -2,7 +2,7 @@
   var program, group, currentUser, groupId = null, currentPicks = {}, editingLocalId = null, countdownTimer = null;
 
   var MODE_DESCRIPTIONS = {
-    HIGHEST_SCORE: 'Todo el pozo se reparte entre los tickets con más aciertos. Sin acumulación.',
+    HIGHEST_SCORE: 'Todo el pozo se reparte entre los tickets con más aciertos.',
     PERFECT_12: 'Solo ganan los tickets con 12/12. Si nadie acierta, el pozo se acumula.',
     MIXED: '50% premia el mayor puntaje semanal y 50% se acumula hasta un 12/12.'
   };
@@ -11,20 +11,21 @@
     var host = document.querySelector('[data-match-list]');
     host.innerHTML = program.matches.map(function (m, idx) {
       var pick = currentPicks[m.id];
-      return '<div class="match-card' + (pick ? ' is-complete' : '') + '" role="listitem">' +
-        '<div class="match-card-head"><span class="match-number">Partido ' + (idx + 1) + '</span><span class="match-meta">' + m.competition + '</span></div>' +
-        '<div class="match-teams">' + m.home + ' vs ' + m.away + '</div>' +
-        '<div class="match-meta">' + Formatters.dateTimeLima(m.kickoffAt) + '</div>' +
-        '<div class="pick-row" data-match-id="' + m.id + '">' +
+      return '<div class="pick-list-row" role="listitem" data-match-id="' + m.id + '">' +
+        '<div class="pick-list-teams">' +
+        '<div class="teams-line"><span class="pick-list-num">' + (idx + 1) + '</span>' + m.home + '<em>vs</em>' + m.away + '</div>' +
+        '<div class="teams-meta">' + m.competition + ' · ' + Formatters.dateTimeLima(m.kickoffAt) + '</div>' +
+        '</div>' +
+        '<div class="pick-list-picks">' +
         ['L', 'E', 'V'].map(function (opt) {
           var label = opt === 'L' ? m.home : (opt === 'E' ? 'Empate' : m.away);
-          return '<button type="button" class="pick-btn' + (pick === opt ? ' active' : '') + '" data-pick="' + opt + '" aria-pressed="' + (pick === opt) + '" aria-label="' + label + '">' + opt + '</button>';
+          return '<button type="button" class="' + (pick === opt ? 'active' : '') + '" data-pick="' + opt + '" aria-pressed="' + (pick === opt) + '" aria-label="' + label + '">' + opt + '</button>';
         }).join('') + '</div></div>';
     }).join('');
 
-    host.querySelectorAll('.pick-row').forEach(function (row) {
+    host.querySelectorAll('.pick-list-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
-        var btn = e.target.closest('.pick-btn');
+        var btn = e.target.closest('button[data-pick]');
         if (!btn) return;
         currentPicks[row.dataset.matchId] = btn.dataset.pick;
         renderMatches();
@@ -37,38 +38,67 @@
     var count = Object.keys(currentPicks).length;
     document.querySelector('[data-picks-count]').textContent = count;
     document.querySelector('[data-progress-bar]').style.width = Math.round((count / 12) * 100) + '%';
+    setStep(count === 12 ? 2 : 1);
+  }
+
+  function setStep(n) {
+    document.querySelectorAll('.wizard-steps span').forEach(function (el) {
+      el.classList.toggle('active', Number(el.dataset.step) === n);
+    });
+  }
+
+  function renderTicketTabs() {
+    var host = document.querySelector('[data-ticket-tabs]');
+    var cart = groupId ? PremiumGolService.getCart(groupId, program.id) : [];
+    var tabsHtml = cart.map(function (line, idx) {
+      var active = editingLocalId === line.localId;
+      return '<button type="button" class="ticket-tab is-complete' + (active ? ' active' : '') + '" data-tab-id="' + line.localId + '">' +
+        String(idx + 1).padStart(2, '0') + '<span class="ticket-tab-remove" data-remove-tab="' + line.localId + '" title="Eliminar jugada">×</span></button>';
+    }).join('');
+    tabsHtml += '<button type="button" class="ticket-tab ticket-tab-add' + (!editingLocalId ? ' active' : '') + '" data-tab-id="">+</button>';
+    host.innerHTML = tabsHtml;
+
+    host.querySelectorAll('[data-remove-tab]').forEach(function (btn) {
+      btn.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        var confirmed = await UI.confirmModal({ title: 'Eliminar jugada', body: 'Se quitará esta jugada de tu compra.', confirmText: 'Eliminar' });
+        if (!confirmed) return;
+        var id = btn.dataset.removeTab;
+        PremiumGolService.removeFromCart(groupId, program.id, id);
+        if (editingLocalId === id) resetBuilder();
+        renderTicketTabs();
+        renderCart();
+      });
+    });
+    host.querySelectorAll('.ticket-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.dataset.tabId;
+        if (!id) { resetBuilder(); renderTicketTabs(); return; }
+        loadTicketIntoBuilder(id);
+      });
+    });
+  }
+
+  function loadTicketIntoBuilder(localId) {
+    var cart = PremiumGolService.getCart(groupId, program.id);
+    var line = cart.find(function (c) { return c.localId === localId; });
+    if (!line) return;
+    currentPicks = Object.assign({}, line.picks);
+    editingLocalId = localId;
+    renderMatches();
+    updateProgress();
+    renderTicketTabs();
+  }
+
+  function resetBuilder() {
+    currentPicks = {};
+    editingLocalId = null;
+    renderMatches();
+    updateProgress();
   }
 
   async function renderCart() {
     var cart = groupId ? PremiumGolService.getCart(groupId, program.id) : [];
-    var host = document.querySelector('[data-cart-list]');
-    if (!groupId) {
-      host.innerHTML = '<p class="muted mini">Elige un grupo para empezar tu carrito.</p>';
-    } else if (!cart.length) {
-      host.innerHTML = '<p class="muted mini">Aún no agregaste jugadas.</p>';
-    } else {
-      host.innerHTML = cart.map(function (line, idx) {
-        return '<div class="cart-line"><div><strong>Jugada ' + (idx + 1) + '</strong><br><small class="muted">' + Object.keys(line.picks).length + '/12 completos</small></div>' +
-          '<div class="cart-line-actions">' +
-          '<button data-edit="' + line.localId + '">Editar</button>' +
-          '<button data-duplicate="' + line.localId + '">Duplicar</button>' +
-          '<button data-remove="' + line.localId + '">Eliminar</button>' +
-          '</div></div>';
-      }).join('');
-      host.querySelectorAll('[data-edit]').forEach(function (btn) { btn.addEventListener('click', function () { editLine(btn.dataset.edit); }); });
-      host.querySelectorAll('[data-duplicate]').forEach(function (btn) {
-        btn.addEventListener('click', function () { PremiumGolService.duplicateInCart(groupId, program.id, btn.dataset.duplicate); renderCart(); UI.toast('Jugada duplicada.', 'info'); });
-      });
-      host.querySelectorAll('[data-remove]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-          var confirmed = await UI.confirmModal({ title: 'Eliminar jugada', body: 'Se quitará esta jugada del carrito.', confirmText: 'Eliminar' });
-          if (!confirmed) return;
-          PremiumGolService.removeFromCart(groupId, program.id, btn.dataset.remove);
-          renderCart();
-        });
-      });
-    }
-
     var totals = PremiumGolService.cartTotals(cart, program);
     document.querySelector('[data-cart-count]').textContent = totals.count;
     document.querySelector('[data-cart-subtotal]').textContent = Formatters.money(totals.subtotalCents);
@@ -81,26 +111,6 @@
     document.querySelector('[data-confirm-btn]').disabled = !confirmEnabled;
     document.querySelector('[data-mobile-confirm]').disabled = !confirmEnabled;
     document.querySelector('[data-mobile-bar]').hidden = totals.count === 0;
-  }
-
-  function editLine(localId) {
-    var cart = PremiumGolService.getCart(groupId, program.id);
-    var line = cart.find(function (c) { return c.localId === localId; });
-    if (!line) return;
-    currentPicks = Object.assign({}, line.picks);
-    editingLocalId = localId;
-    document.querySelector('[data-edit-hint]').hidden = false;
-    renderMatches();
-    updateProgress();
-    document.querySelector('[data-match-list]').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function resetBuilder() {
-    currentPicks = {};
-    editingLocalId = null;
-    document.querySelector('[data-edit-hint]').hidden = true;
-    renderMatches();
-    updateProgress();
   }
 
   function startCountdown() {
@@ -166,23 +176,22 @@
     if (!groupId) {
       group = null;
       document.querySelector('[data-pool-label]').textContent = '—';
-      document.querySelector('[data-mode-label]').textContent = '—';
       document.querySelector('[data-mode-desc]').textContent = '';
+      renderTicketTabs();
       renderCart();
       return;
     }
     var groupRes = await Api.getGroup(groupId);
     if (!groupRes.ok) { UI.toast(groupRes.error.message, 'error'); groupId = null; return; }
     group = groupRes.data.group;
-
-    document.querySelector('[data-mode-label]').textContent = Formatters.prizeModeLabel(group.prizeMode);
-    document.querySelector('[data-mode-desc]').textContent = MODE_DESCRIPTIONS[group.prizeMode] || '';
+    document.querySelector('[data-mode-desc]').textContent = Formatters.prizeModeLabel(group.prizeMode) + ' — ' + (MODE_DESCRIPTIONS[group.prizeMode] || '');
 
     var poolRes = await Api.getGroupPool(groupId, program.id);
     if (poolRes.ok) {
       var poolLabel = group.prizeMode === 'HIGHEST_SCORE' ? Formatters.money(poolRes.data.pool.weeklyPoolCents) : Formatters.money(poolRes.data.progressivePoolCents);
       document.querySelector('[data-pool-label]').textContent = poolLabel;
     }
+    renderTicketTabs();
     renderCart();
   }
 
@@ -199,7 +208,7 @@
     if (!currentUser) {
       UI.toast('Inicia sesión para elegir tu grupo y guardar tu jugada.', 'info');
     } else {
-      UI.toast('Selecciona un grupo antes de agregar la jugada al carrito.', 'error');
+      UI.toast('Selecciona un grupo antes de guardar la jugada.', 'error');
     }
     document.querySelector('[data-group-select]').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
@@ -248,23 +257,24 @@
     document.querySelector('[data-loading]').hidden = true;
     document.querySelector('[data-content]').hidden = false;
     document.querySelector('[data-program-name]').textContent = program.name;
-    document.querySelector('[data-ticket-price]').textContent = Formatters.money(program.ticketPriceCents);
 
     renderMatches();
     updateProgress();
     startCountdown();
     await setupGroupPicker();
+    renderTicketTabs();
     await renderCart();
 
     document.querySelector('[data-random-btn]').addEventListener('click', function () { currentPicks = PremiumGolService.randomPicks(program); renderMatches(); updateProgress(); });
     document.querySelector('[data-clear-btn]').addEventListener('click', function () { currentPicks = {}; renderMatches(); updateProgress(); });
 
     document.querySelector('[data-add-cart-btn]').addEventListener('click', async function () {
-      if (Object.keys(currentPicks).length < 12) { UI.toast('Completa los 12 pronósticos antes de agregar la jugada.', 'error'); return; }
+      if (Object.keys(currentPicks).length < 12) { UI.toast('Completa los 12 pronósticos antes de guardar la jugada.', 'error'); return; }
       if (!(await requireGroupOrPrompt())) return;
       if (editingLocalId) { PremiumGolService.updateInCart(groupId, program.id, editingLocalId, currentPicks); UI.toast('Jugada actualizada.', 'success'); }
-      else { PremiumGolService.addToCart(groupId, program.id, currentPicks); UI.toast('Jugada agregada al carrito.', 'success'); }
+      else { PremiumGolService.addToCart(groupId, program.id, currentPicks); UI.toast('Jugada guardada.', 'success'); }
       resetBuilder();
+      renderTicketTabs();
       renderCart();
     });
 
