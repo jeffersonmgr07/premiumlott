@@ -4,9 +4,11 @@
 <main class="main" data-loading><p class="muted">Cargando programa…</p></main>
 <main class="main" data-content hidden>
 <section class="section" style="padding-top:1.2rem">
-<div class="section-head">
-  <div><p class="eyebrow" data-program-name>PremiumGol</p><h1 class="title">Arma tu jugada</h1><p class="lead">Marca Local, Empate o Visitante en los 12 partidos. <a href="../pages/legales/reglas-premiumgol.html" target="_blank">Ver reglas</a></p></div>
-  <div class="card compact" style="text-align:center;min-width:150px"><span class="muted">Cierra en</span><h2 data-countdown>—</h2></div>
+
+<div class="pg-strip">
+  <div class="pg-strip-title"><strong>PremiumGol</strong><span data-program-name>Programa semanal</span></div>
+  <div class="pg-strip-metric"><span>Pozo del grupo</span><strong data-pool-label>—</strong></div>
+  <div class="pg-strip-metric"><span>Cierra en</span><strong data-countdown>—</strong></div>
 </div>
 
 <div class="card compact" data-group-picker style="margin-bottom:1rem">
@@ -19,41 +21,35 @@
   <p class="mini muted" data-group-hint>Puedes armar tus pronósticos primero y elegir el grupo antes de confirmar.</p>
 </div>
 
-<div class="grid grid-3">
-  <div class="card compact"><span class="muted">Pozo del grupo</span><h2 data-pool-label>—</h2></div>
-  <div class="card compact"><span class="muted">Modalidad</span><h2 data-mode-label>—</h2><p class="mini" data-mode-desc></p></div>
-  <div class="card compact"><span class="muted">Precio por ticket</span><h2 data-ticket-price>S/ 5.00</h2></div>
-</div>
+<div class="wizard-steps"><span data-step="1" class="active">Paso 1 · Elige tu jugada</span><span data-step="2">Paso 2 · Finalizar tu compra</span></div>
 
 <div class="wc-layout">
 <div class="wc-main-flow">
   <article class="card">
+    <div class="ticket-tabs" data-ticket-tabs></div>
     <div class="builder-toolbar">
-      <div><strong data-picks-count>0</strong>/12 pronósticos</div>
+      <div><strong data-picks-count>0</strong>/12 pronósticos · <span class="mini" data-mode-desc></span></div>
       <div class="cart-line-actions">
-        <button type="button" data-random-btn>Elegir al azar</button>
+        <button type="button" data-random-btn>Azar</button>
         <button type="button" data-clear-btn>Limpiar</button>
       </div>
     </div>
-    <div class="picks-progress" style="margin:.7rem 0"><i data-progress-bar style="width:0%"></i></div>
-    <div class="pick-grid" data-match-list role="list" aria-label="Partidos del programa"></div>
-    <button class="btn btn-primary" style="width:100%;margin-top:1rem" data-add-cart-btn>Agregar jugada al carrito</button>
-    <p class="mini" data-edit-hint hidden>Editando una jugada existente del carrito.</p>
+    <div class="picks-progress" style="margin:.6rem 0"><i data-progress-bar style="width:0%"></i></div>
+    <div class="pick-list" data-match-list role="list" aria-label="Partidos del programa"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:1rem" data-add-cart-btn>Guardar jugada</button>
+    <p class="mini muted" style="margin-top:.5rem">Cada ticket cuesta S/ 5.00. <a href="../pages/legales/reglas-premiumgol.html" target="_blank">Ver reglas</a></p>
   </article>
 </div>
 
 <aside class="wc-slip sticky-summary">
   <article class="card">
-    <h3>Carrito de jugadas</h3>
-    <div data-cart-list><p class="muted mini">Aún no agregaste jugadas.</p></div>
-    <div style="margin-top:.8rem">
-      <div class="cart-summary-row"><span>Tickets</span><strong data-cart-count>0</strong></div>
-      <div class="cart-summary-row"><span>Subtotal</span><strong data-cart-subtotal>S/ 0.00</strong></div>
-      <div class="cart-summary-row"><span>Aporte al pozo del grupo</span><strong data-cart-pool>S/ 0.00</strong></div>
-      <div class="cart-summary-row"><span>Comisión de la plataforma</span><strong data-cart-fee>S/ 0.00</strong></div>
-    </div>
+    <h3>Resumen de compra</h3>
+    <div class="cart-summary-row"><span>Tickets guardados</span><strong data-cart-count>0</strong></div>
+    <div class="cart-summary-row"><span>Subtotal</span><strong data-cart-subtotal>S/ 0.00</strong></div>
+    <div class="cart-summary-row"><span>Aporte al pozo del grupo</span><strong data-cart-pool>S/ 0.00</strong></div>
+    <div class="cart-summary-row"><span>Comisión de la plataforma</span><strong data-cart-fee>S/ 0.00</strong></div>
     <button class="btn btn-primary" style="width:100%;margin-top:.8rem" data-confirm-btn disabled>Registrar jugadas</button>
-    <p class="mini">MODO DE PRUEBA — no se cobra dinero real.</p>
+    <p class="mini">Modo de prueba — no se cobra dinero real.</p>
   </article>
 </aside>
 </div>
